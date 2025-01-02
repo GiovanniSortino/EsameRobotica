@@ -3,7 +3,11 @@ sceneSetups:
   isLoaded: 1
   isActive: 1
   isSubScene: 0
-- path: Assets/Abandoned buildings/Scene/abandoned_buildings.unity
+- path: Assets/Abandoned buildings/Scene/assets_preview.unity
+  isLoaded: 1
+  isActive: 0
+  isSubScene: 0
+- path: Assets/Monqo Sci-Fi Car/Demo/DemoScene.unity
   isLoaded: 1
   isActive: 0
   isSubScene: 0

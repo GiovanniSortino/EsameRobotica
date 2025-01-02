@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.PlasticSCM.Editor", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.VisualScripting.Flow", "Unity.VisualScripting.Flow.csproj", "{60FFCF0D-F5AF-8886-2962-C89AA82257F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityEditor.UI", "UnityEditor.UI.csproj", "{51BD7581-4EA3-0623-1A16-0438450E06E2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Universal.Runtime.csproj", "{5BAA4E53-AE28-982F-AD8A-8451431455A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityEditor.UI", "UnityEditor.UI.csproj", "{51BD7581-4EA3-0623-1A16-0438450E06E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.Timeline.Editor", "Unity.Timeline.Editor.csproj", "{88718822-1624-FFBD-0B1D-8EF9EF038876}"
 EndProject
@@ -137,14 +137,14 @@ Global
 		{60FFCF0D-F5AF-8886-2962-C89AA82257F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60FFCF0D-F5AF-8886-2962-C89AA82257F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60FFCF0D-F5AF-8886-2962-C89AA82257F5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BAA4E53-AE28-982F-AD8A-8451431455A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BAA4E53-AE28-982F-AD8A-8451431455A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BAA4E53-AE28-982F-AD8A-8451431455A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BAA4E53-AE28-982F-AD8A-8451431455A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51BD7581-4EA3-0623-1A16-0438450E06E2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{88718822-1624-FFBD-0B1D-8EF9EF038876}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{88718822-1624-FFBD-0B1D-8EF9EF038876}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88718822-1624-FFBD-0B1D-8EF9EF038876}.Release|Any CPU.ActiveCfg = Release|Any CPU
