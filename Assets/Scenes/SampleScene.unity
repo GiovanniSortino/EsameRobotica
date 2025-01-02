@@ -619,7 +619,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   normalMaterial: {fileID: 2100000, guid: 524bad93bb57cb34ca3d96f44ad8d8a6, type: 2}
-  thermalMaterial: {fileID: 2100000, guid: d4df5b377d3f8b242a2d5f41bfc74106, type: 2}
+  thermalMaterial: {fileID: 2100000, guid: 507540c3a26e2c240b669d477190c498, type: 2}
 --- !u!1 &528227842 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4557791990692939405, guid: 434556fb8f1ccf94a81a971170e78c65, type: 3}
@@ -1082,6 +1082,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6723184954175235785, guid: 434556fb8f1ccf94a81a971170e78c65, type: 3}
       propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7353050432563672671, guid: 434556fb8f1ccf94a81a971170e78c65, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7652283872794802947, guid: 434556fb8f1ccf94a81a971170e78c65, type: 3}
@@ -1683,7 +1687,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   normalMaterial: {fileID: 2100000, guid: 524bad93bb57cb34ca3d96f44ad8d8a6, type: 2}
-  thermalMaterial: {fileID: 2100000, guid: d4df5b377d3f8b242a2d5f41bfc74106, type: 2}
+  thermalMaterial: {fileID: 2100000, guid: 507540c3a26e2c240b669d477190c498, type: 2}
 --- !u!114 &1692065709
 MonoBehaviour:
   m_ObjectHideFlags: 0
