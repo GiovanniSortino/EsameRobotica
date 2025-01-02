@@ -5,6 +5,7 @@ using Neo4j.Driver;
 using System.Threading.Tasks;
 using System;
 using System.Data.Common;
+using Unity.VisualScripting;
 
 public class Prova : MonoBehaviour{
     private IDriver _driver;
@@ -271,7 +272,7 @@ public class Prova : MonoBehaviour{
     // -----------------------------------------------------------------------------------------------------------------------
 
     public async Task<int> GetBatteryLevelAsync(){
-        string query = $"MATCH (r:Robot {id: 'R1'}) RETURN r.livello_batteria AS livello_batteria";
+        string query = "MATCH (r:Robot {id: 'R1'}) RETURN r.livello_batteria AS livello_batteria";
         var result = await ExecuteQueryAsync(query);
 
         if (result.Count > 0 && result[0].ContainsKey("livello_batteria"))
@@ -287,8 +288,7 @@ public class Prova : MonoBehaviour{
 
     public async Task<(int x, int y)> GetRobotPositionAsync(){
         // Prima query: Trova la cella associata al robot
-        string queryCella = @"  MATCH (r:Robot {id: 'R1'})
-                                RETURN r.cella AS id_cella";
+        string queryCella = "MATCH (r:Robot {id: 'R1'}) RETURN r.cella AS id_cella";
 
         var resultCella = await ExecuteQueryAsync(queryCella);
 
@@ -299,8 +299,7 @@ public class Prova : MonoBehaviour{
 
         // Estrai l'ID della cella
         string id_cella = resultCella[0]["id_cella"].ToString();
-        string queryPosition = $@" MATCH (c:Cella {{id: '{id_cella}'}})
-                                  RETURN c.x AS x, c.y AS y";
+        string queryPosition = $"MATCH (c:Cella {{id: '{id_cella}'}}) RETURN c.x AS x, c.y AS y";
 
         var resultPosition = await ExecuteQueryAsync(queryPosition);
 
@@ -316,17 +315,17 @@ public class Prova : MonoBehaviour{
         return (-1, -1);
     }
 
-    public async Task FindNextPosition(){
-        string batteryLevel = GetBatteryLevelAsync();
-        var (robotX, robotY) = await GetRobotPositionAsync();
-        string query = @"   MATCH (c:Cella), (r:Robot {id: 'R1'})
-                            WITH c, r, distance(point({x: c.x, y: c.y}), point({x: $robotX, y: $robotY})) AS dist
-                            WHERE ($batteryLevel < 20 AND dist < 10) OR ($batteryLevel >= 20 AND $batteryLevel < 50 AND dist >= 10)
-                            RETURN c.x AS x, c.y AS y
-                            ORDER BY dist ASC
-                            LIMIT 1";
-
-    }
+    // public async Task FindNextPosition(){
+    //     string batteryLevel = GetBatteryLevelAsync();
+    //     var (robotX, robotY) = await GetRobotPositionAsync();
+    //     string query =      @"MATCH (c:Cella), (r:Robot {id: 'R1'})
+    //                         WITH c, r, distance(point({x: c.x, y: c.y}), point({x: $robotX, y: $robotY})) AS dist
+    //                         WHERE ($batteryLevel < 20 AND dist < 10) OR ($batteryLevel >= 20 AND $batteryLevel < 50 AND dist >= 10)
+    //                         RETURN c.x AS x, c.y AS y
+    //                         ORDER BY dist ASC
+    //                         LIMIT 1";
+        
+    // }
 
 
     // public async Task FindCellAsync(){
