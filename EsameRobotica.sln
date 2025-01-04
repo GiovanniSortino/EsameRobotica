@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.TestTools.CodeCoverag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.Rider.Editor", "Unity.Rider.Editor.csproj", "{01CF1613-EDA4-0FED-7642-21F1DF76DEF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{CFAB0D69-C516-D102-31E6-009BC09E16F2}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.CollabProxy.Editor", "Unity.CollabProxy.Editor.csproj", "{D824381C-92BD-8D75-5E47-DBC9BEEEB02F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.VisualEffectGraph.Runtime", "Unity.VisualEffectGraph.Runtime.csproj", "{61EB7218-2BA0-202A-D12E-2C404E77BFDB}"
@@ -85,9 +87,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.Burst.Editor", "Unity
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection", "Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.csproj", "{F807D260-5D2B-D6C2-8CBD-5F29AA577C35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{CFAB0D69-C516-D102-31E6-009BC09E16F2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.Settings.Editor", "Unity.Settings.Editor.csproj", "{442D30EE-4ACE-923E-6208-3C5473BE9866}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{6F483298-8ED4-8772-2767-4C7CE4652DB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.Mathematics.Editor", "Unity.Mathematics.Editor.csproj", "{60F6AAFE-AFA4-FFB6-326C-8EA753769AED}"
 EndProject
@@ -217,6 +219,10 @@ Global
 		{01CF1613-EDA4-0FED-7642-21F1DF76DEF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01CF1613-EDA4-0FED-7642-21F1DF76DEF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01CF1613-EDA4-0FED-7642-21F1DF76DEF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D824381C-92BD-8D75-5E47-DBC9BEEEB02F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D824381C-92BD-8D75-5E47-DBC9BEEEB02F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D824381C-92BD-8D75-5E47-DBC9BEEEB02F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -281,14 +287,14 @@ Global
 		{F807D260-5D2B-D6C2-8CBD-5F29AA577C35}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F807D260-5D2B-D6C2-8CBD-5F29AA577C35}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F807D260-5D2B-D6C2-8CBD-5F29AA577C35}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CFAB0D69-C516-D102-31E6-009BC09E16F2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{442D30EE-4ACE-923E-6208-3C5473BE9866}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{442D30EE-4ACE-923E-6208-3C5473BE9866}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{442D30EE-4ACE-923E-6208-3C5473BE9866}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{442D30EE-4ACE-923E-6208-3C5473BE9866}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F483298-8ED4-8772-2767-4C7CE4652DB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F483298-8ED4-8772-2767-4C7CE4652DB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F483298-8ED4-8772-2767-4C7CE4652DB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F483298-8ED4-8772-2767-4C7CE4652DB0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60F6AAFE-AFA4-FFB6-326C-8EA753769AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{60F6AAFE-AFA4-FFB6-326C-8EA753769AED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60F6AAFE-AFA4-FFB6-326C-8EA753769AED}.Release|Any CPU.ActiveCfg = Release|Any CPU
