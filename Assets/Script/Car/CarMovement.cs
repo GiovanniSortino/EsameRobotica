@@ -67,19 +67,24 @@ public class CarPathFollower : MonoBehaviour
     public Transform[] waypoints;         // Array di punti da seguire
     public float velocità = 5f;           // Velocità di movimento
     public float rotazioneVelocità = 5f;  // Velocità di rotazione
-    private int waypointCorrente = 0;     // Indice del waypoint attuale
+    public int waypointCorrente = 0;     // Indice del waypoint attuale
+    public DistanceSensorCar distanceSensorCenter;
+    public DistanceSensorCar distanceSensorLeft;
+    public DistanceSensorCar distanceSensorRight;
 
     void Update(){
-        Transform targetWaypoint = waypoints[waypointCorrente];
-        Vector3 direzione = (targetWaypoint.position - transform.position).normalized;
+        if(distanceSensorLeft.currentDistance > 2 && distanceSensorCenter.currentDistance > 1 && distanceSensorRight.currentDistance > 2){
+            Transform targetWaypoint = waypoints[waypointCorrente];
+            Vector3 direzione = (targetWaypoint.position - transform.position).normalized;
 
-        Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, rotazioneVelocità * Time.deltaTime);
+            Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, rotazioneVelocità * Time.deltaTime);
 
-        transform.position += transform.forward * velocità * Time.deltaTime;
+            transform.position += transform.forward * velocità * Time.deltaTime;
 
-        if (Vector3.Distance(transform.position, targetWaypoint.position) < 1f){
-            waypointCorrente = (waypointCorrente + 1) % waypoints.Length;
+            if (Vector3.Distance(transform.position, targetWaypoint.position) < 1f){
+                waypointCorrente = (waypointCorrente + 1) % waypoints.Length;
+            }
         }
     }
 }
