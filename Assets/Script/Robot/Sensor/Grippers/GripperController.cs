@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GripperController : MonoBehaviour  
+public class GripperController : MonoBehaviour
 {
     [Header("Riferimenti bracci pinza")]
     public Transform braccioSinistro;
@@ -127,20 +127,16 @@ public class GripperController : MonoBehaviour
     {
         if (oggettoPreso == null)
             return;
+
         // Fissa l'oggetto alla pinza
         oggettoPreso.SetParent(transform);
 
-        // Disabilita la fisica per impedire il movimento
-        Rigidbody rb = oggettoPreso.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true; // Disabilita la fisica
-        }
+        // Qui rimosso l'uso di isKinematic
 
         Vector3 posSinistro = braccioSinistro.localPosition;
         Vector3 posDestro = braccioDestro.localPosition;
 
-        // Controlla se targetDistance � oltre i limiti
+        // Controlla se targetDistance è oltre i limiti
         targetDistance = Mathf.Clamp(targetDistance, chiusuraMinima, aperturaMassima);
 
         // Movimento graduale delle braccia
@@ -189,18 +185,15 @@ public class GripperController : MonoBehaviour
         {
             robot.rotation = targetRotation; // Forza l'angolo finale
             rotationProgress = 0f;          // Resetta per rotazioni future
-                                       
+
             rotationActive = false;
-            
         }
 
     }
     void IniziaMovimento(float distanza)
     {
-       
         isMovingForward = true; // Attiva lo stato di movimento
         moveTarget = robot.position + robot.forward * distanza; // Calcola la destinazione
-
     }
 
     void MuoviAvanti(bool flag)
@@ -225,14 +218,12 @@ public class GripperController : MonoBehaviour
 
     void RilasciaOggetto()
     {
-        if (oggettoPreso != null) // Controlla se c'� un oggetto agganciato
+        if (oggettoPreso != null) // Controlla se c'è un oggetto agganciato
         {
             oggettoPreso.SetParent(null); // Scollega l'oggetto dalla pinza
-            Rigidbody rb = oggettoPreso.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = false; // Riabilita la fisica
-            }
+
+            // Qui rimosso l'uso di isKinematic
+
             oggettoPreso = null; // Resetta l'oggetto preso
             relase = false;
         }
