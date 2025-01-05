@@ -125,6 +125,8 @@ public class GripperController : MonoBehaviour
 
     void ControllaMovimentoPinza()
     {
+        if (oggettoPreso == null)
+            return;
         // Fissa l'oggetto alla pinza
         oggettoPreso.SetParent(transform);
 
