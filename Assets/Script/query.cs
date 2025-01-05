@@ -9,47 +9,19 @@ using Unity.VisualScripting;
 
 public class Prova : MonoBehaviour{
     private IDriver _driver;
+    private IAsyncSession _session;
 
     async void Start(){
-    Debug.Log("Avvio del tentativo di connessione a Neo4j...");
-    await ConnectToDatabaseAsync();
+        Debug.Log("Avvio del tentativo di connessione a Neo4j...");
+        await ConnectToDatabaseAsync();
 
-    // // Testa la creazione di un nodo Ostacolo
-    // await CreateObstacleNodeAsync("O1", 10, "C1");
+        // Carica i dati nella base di conoscenza
+        await LoadDataFromCSV();
+        // await GetYoungestMissingPersonAsync();
+        // await UpdatePersonStatusAsync("1", "Ritrovato");
+        // await ComunicaConPersonaleAsync("pc1", "Ho trovato una persona");
 
-    // // Testa la creazione di un nodo Cella
-    // await CreateCellNodeAsync("C1", 5, 5, "Z1");
-
-    // // Testa la creazione di un nodo Disperso
-    // await CreateMissingPersonNodeAsync("D1", "Mario Rossi", 35, "C1", "Non trovato", "Z1");
-
-    // // Testa l'aggiornamento di un nodo Disperso
-    // await UpdataeMissingPersonNodeAsync("D1", "Mario Rossi", 35, "C2", "Trovato", "Z1");
-
-    // // Testa la creazione di un nodo Robot
-    // await CreateRobotNodeAsync("R1", "Robot Alpha", 80, "Operativo", "C1");
-
-    // // Testa la creazione di una Base di ricarica
-    // await CreateChargerBaseAsync("B1", "C1", 20, 100);
-
-    // // Testa la creazione di un nodo Personale Competente
-    // await CreateRescueTeamAsync("PC1", "Medico");
-
-    // // Testa il metodo per trovare una cella dato un x, y
-    // string cellId = await FindCellIdAsync(5, 5);
-    // if (!string.IsNullOrEmpty(cellId))
-    // {
-    //     Debug.Log($"ID della cella trovata: {cellId}");
-    // }
-
-    // Carica i dati nella base di conoscenza
-    await LoadDataFromCSV();
-
-    await GetYoungestMissingPersonAsync();
-    await UpdatePersonStatusAsync("1", "Ritrovato");
-    await ComunicaConPersonaleAsync("pc1", "Ho trovato una persona");
-
-    Debug.Log("Test completati!");
+        Debug.Log("Test completati!");
     }
 
 
@@ -57,13 +29,11 @@ public class Prova : MonoBehaviour{
         Debug.Log("Disconnessione dal database...");
         if (_driver != null){
             await _driver.DisposeAsync();
+            await _session.DisposeAsync();
             Debug.Log("Driver disconnesso correttamente.");
         }
     }
 
-    /// <summary>
-    /// Metodo per la creazione della connessione con il db.
-    /// </summary>
     private async Task ConnectToDatabaseAsync(){
         var uri = "bolt://localhost:7687";
         var user = "neo4j";
@@ -73,6 +43,7 @@ public class Prova : MonoBehaviour{
             // Creazione del driver
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
             Debug.Log("Connessione al database Neo4j riuscita!");
+            _session = _driver.AsyncSession(o => o.WithDatabase("neo4j"));
 
             // Chiamata al metodo CountNodesAsync
             int nodeCount = await CountNodesAsync();
@@ -85,60 +56,41 @@ public class Prova : MonoBehaviour{
         }
     }
 
-    /// <summary>
-    /// Metodo pubblico per eseguire query Cypher personalizzate
-    /// </summary>
-    /// <param name="query">La query Cypher da eseguire</param>
-    /// <returns>Il risultato della query come lista di dizionari</returns>
-    /// 
     public async Task<List<Dictionary<string, object>>> ExecuteQueryAsync(string query, bool isWrite = true){
         var results = new List<Dictionary<string, object>>();
 
-        if (_driver == null)
-        {
+        if (_driver == null){
             Debug.LogError("Driver non inizializzato. Assicurati di essere connesso al database.");
             return results;
         }
 
-        try
-        {
-            await using var session = _driver.AsyncSession(o => o.WithDatabase("neo4j"));
-
-            if (isWrite)
-            {
+        try{          
+            if (isWrite){
                 // Per query di scrittura
-                await session.ExecuteWriteAsync(async tx =>
-                {
+                await _session.ExecuteWriteAsync(async tx =>{
                     var cursor = await tx.RunAsync(query);
 
-                    while (await cursor.FetchAsync())
-                    {
+                    while (await cursor.FetchAsync()){
                         var record = cursor.Current;
                         var row = new Dictionary<string, object>();
 
-                        foreach (var key in record.Keys)
-                        {
+                        foreach (var key in record.Keys){
                             row[key] = record[key];
                         }
 
                         results.Add(row);
                     }
                 });
-            }
-            else
-            {
+            }else{
                 // Per query di lettura
-                await session.ExecuteReadAsync(async tx =>
-                {
+                await _session.ExecuteReadAsync(async tx =>{
                     var cursor = await tx.RunAsync(query);
 
-                    while (await cursor.FetchAsync())
-                    {
+                    while (await cursor.FetchAsync()){
                         var record = cursor.Current;
                         var row = new Dictionary<string, object>();
 
-                        foreach (var key in record.Keys)
-                        {
+                        foreach (var key in record.Keys){
                             row[key] = record[key];
                         }
 
@@ -148,20 +100,13 @@ public class Prova : MonoBehaviour{
             }
 
             Debug.Log("Query eseguita con successo.");
-        }
-        catch (System.Exception ex)
-        {
+        }catch (System.Exception ex){
             Debug.LogError($"Errore durante l'esecuzione della query: {ex.Message}");
         }
 
         return results;
     }
 
-
-
-    /// <summary>
-    /// Metodo per contare tutti i nodi nel database.
-    /// </summary>
     public async Task<int> CountNodesAsync(){
         string query = "MATCH (n) RETURN count(n) AS count";
         var result = await ExecuteQueryAsync(query, false);
@@ -194,9 +139,6 @@ public class Prova : MonoBehaviour{
         Debug.Log($"Relazione é_formata creata: Zona_id={zona} è formata da Cella_id:{id}");
     }
 
-    /// <summary>
-    /// Metodo inserire il nodo Disperso non ancora trovato
-    /// /// </summary>
     public async Task CreateMissingPersonNodeAsync(String id, String nome, int eta, String cella, String stato, String zona){
         string query = $"CREATE (:Disperso {{id: '{id}', nome: '{nome}', eta: {eta}, cella: '{cella}', stato_rilevamento: '{stato}', zona: '{zona}'}})";
         await ExecuteQueryAsync(query);
@@ -209,9 +151,6 @@ public class Prova : MonoBehaviour{
         Debug.Log($"Relazione Cerca creata: Robot_id=R1 Cerca Disperso_id={id}");
     }
 
-    /// <summary>
-    /// Metodo aggiornare il nodo Disperso quando viene ritrovato
-    /// /// </summary>
     public async Task UpdataeMissingPersonNodeAsync(String id, String nome, int eta, String cella, String stato, String zona){
         string query = $"MATCH (d:Disperso {{id: '{id}'}}) SET d.cella = '{cella}', d.stato_rilevamento = 'Trovato' RETURN d";
         await ExecuteQueryAsync(query);
@@ -317,78 +256,51 @@ public class Prova : MonoBehaviour{
         return (-1, -1);
     }
 
-    // public async Task FindNextPosition(){
-    //     string batteryLevel = GetBatteryLevelAsync();
-    //     var (robotX, robotY) = await GetRobotPositionAsync();
-    //     string query =      @"MATCH (c:Cella), (r:Robot {id: 'R1'})
-    //                         WITH c, r, distance(point({x: c.x, y: c.y}), point({x: $robotX, y: $robotY})) AS dist
-    //                         WHERE ($batteryLevel < 20 AND dist < 10) OR ($batteryLevel >= 20 AND $batteryLevel < 50 AND dist >= 10)
-    //                         RETURN c.x AS x, c.y AS y
-    //                         ORDER BY dist ASC
-    //                         LIMIT 1";
-        
-    // }
-
-
-    // public async Task FindCellAsync(){
-
-    // }
-
      // Metodo per leggere il CSV e caricare i dati
-    public async System.Threading.Tasks.Task LoadDataFromCSV()
-{
-    // Percorso del file all'interno delle Resources
-    TextAsset csvFile = Resources.Load<TextAsset>("persone_disperse");
-    if (csvFile == null)
-    {
-        Debug.LogError("File CSV non trovato!");
-        return; // Esce dal metodo
+    public async System.Threading.Tasks.Task LoadDataFromCSV(){
+        // Percorso del file all'interno delle Resources
+        TextAsset csvFile = Resources.Load<TextAsset>("persone_disperse");
+        if (csvFile == null){
+            Debug.LogError("File CSV non trovato!");
+            return; // Esce dal metodo
+        }
+
+        // Elimina i dati esistenti per evitare duplicati
+        await ExecuteQueryAsync("MATCH (p:Persona) DETACH DELETE p;");
+
+        // Legge tutte le righe del CSV
+        string[] lines = csvFile.text.Split('\n'); // Divide il file per righe
+
+        // Ciclo per elaborare ogni riga
+        for (int i = 1; i < lines.Length; i++){ // Salta la prima riga se è un'intestazione
+            string[] columns = lines[i].Split(','); // Divide ogni riga per colonne
+
+            // Controlla che la riga sia valida
+            if (columns.Length < 6){
+                Debug.LogWarning($"Riga {i + 1} ha un formato non valido e sarà ignorata.");
+                continue; // Salta questa iterazione del ciclo
+            }
+
+            try{
+                // Estrai i valori delle colonne
+                string nome = columns[1].Trim();
+                string cognome = columns[2].Trim();
+                string zona = columns[3].Trim();
+                int eta = int.Parse(columns[4].Trim());
+                string stato = columns[5].Trim();
+
+                // Query per creare i nodi Persona
+                await ExecuteQueryAsync(
+                    $"CREATE (:Persona {{nome: '{nome}', cognome: '{cognome}', zona: '{zona}', eta: '{eta}', stato: '{stato}'}})"
+                );
+                Debug.Log($"Dati caricati per {nome} {cognome}!");
+            }catch (Exception ex){
+                Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
+            }
+        }
+
+        Debug.Log("Caricamento completato!");
     }
-
-    using var session = _driver.AsyncSession();
-
-    // Elimina i dati esistenti per evitare duplicati
-    await session.RunAsync("MATCH (p:Persona) DETACH DELETE p;");
-
-    // Legge tutte le righe del CSV
-    string[] lines = csvFile.text.Split('\n'); // Divide il file per righe
-
-    // Ciclo per elaborare ogni riga
-    for (int i = 1; i < lines.Length; i++) // Salta la prima riga se è un'intestazione
-    {
-        string[] columns = lines[i].Split(','); // Divide ogni riga per colonne
-
-        // Controlla che la riga sia valida
-        if (columns.Length < 6)
-        {
-            Debug.LogWarning($"Riga {i + 1} ha un formato non valido e sarà ignorata.");
-            continue; // Salta questa iterazione del ciclo
-        }
-
-        try
-        {
-            // Estrai i valori delle colonne
-            string nome = columns[1].Trim();
-            string cognome = columns[2].Trim();
-            string zona = columns[3].Trim();
-            int eta = int.Parse(columns[4].Trim());
-            string stato = columns[5].Trim();
-
-            // Query per creare i nodi Persona
-            await session.RunAsync(
-                "CREATE (:Persona {nome: $nome, cognome: $cognome, zona: $zona, eta: $eta, stato: $stato})",
-                new { nome, cognome, zona, eta, stato }
-            );
-            Debug.Log($"Dati caricati per {nome} {cognome}!");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
-        }
-    }
-
-    Debug.Log("Caricamento completato!");
-}
 
 
     public async Task<(string id, string nome, int eta, string zona)> GetYoungestMissingPersonAsync(){
@@ -401,8 +313,7 @@ public class Prova : MonoBehaviour{
 
         var result = await ExecuteQueryAsync(query, false);
 
-        if (result.Count > 0 && result[0].ContainsKey("id"))
-        {
+        if (result.Count > 0 && result[0].ContainsKey("id")){
             // Estrai i valori dalla query
             string id = result[0]["id"].ToString();
             string nome = result[0]["nome"].ToString();
@@ -421,14 +332,12 @@ public class Prova : MonoBehaviour{
     public async Task UpdatePersonStatusAsync(string id, string nuovoStato){
 
         // Controlla che l'ID sia valido
-        if (string.IsNullOrEmpty(id))
-        {
+        if (string.IsNullOrEmpty(id)){
             Debug.LogError("ID non valido. Aggiornamento stato fallito.");
             return;
         }
 
-        try
-        {
+        try{
             // Query per aggiornare lo stato della persona
             string query = @"
                 MATCH (p:Persona {id: $id})
@@ -439,19 +348,14 @@ public class Prova : MonoBehaviour{
             var result = await ExecuteQueryAsync(query, true);
 
             // Controlla se l'aggiornamento ha avuto successo
-            if (result.Count > 0 && result[0].ContainsKey("nome") && result[0].ContainsKey("stato"))
-            {
+            if (result.Count > 0 && result[0].ContainsKey("nome") && result[0].ContainsKey("stato")){
                 string nome = result[0]["nome"].ToString();
                 string statoAggiornato = result[0]["stato"].ToString();
                 Debug.Log($"Stato aggiornato con successo per {nome}. Nuovo stato: {statoAggiornato}");
-            }
-            else
-            {
+            }else{
                 Debug.LogError("Aggiornamento stato fallito. Nessun risultato trovato.");
             }
-        }
-        catch (Exception ex)
-        {
+        }catch (Exception ex){
             Debug.LogError($"Errore durante l'aggiornamento dello stato: {ex.Message}");
         }
     }
@@ -463,37 +367,10 @@ public class Prova : MonoBehaviour{
 
         await ExecuteQueryAsync(query, true);
         Debug.Log($"Messaggio inviato: '{messaggio}' dal robot R1 al personale {personaleId}");
-}
+    }
 
 
 }
-    
-
-    // private async void OnDestroy(){
-    //     if (_driver != null)
-    //     {
-    //         try
-    //         {
-    //             await _driver.CloseAsync();
-    //             Debug.Log("Connessione a Neo4j chiusa.");
-    //         }
-    //         catch (Exception ex)
-    //         {
-    //             Debug.LogError($"Errore durante la chiusura del driver: {ex.Message}");
-    //         }
-    //         finally
-    //         {
-    //             await _driver.DisposeAsync();
-    //             Debug.Log("Driver disconnesso correttamente.");
-    //         }
-    //     }
-    // }
-
-
-
-
-
-
 
 
     // public async Task CreateRobotNodeAsync(String id, String nome, int livello_batteria, String stato, String cella){
@@ -507,6 +384,3 @@ public class Prova : MonoBehaviour{
     //     await ExecuteQueryAsync(query);
     //     Debug.Log($"Relazione Ha_Trovato creata: Robot_id=R1 Ha_Trovato Disperso_id={id}");
     // }
-
-
-
