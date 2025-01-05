@@ -7,6 +7,7 @@ TagManager:
   - Thermal
   - Object
   - Robot
+  - WayPoint
   layers:
   - Default
   - TransparentFX
