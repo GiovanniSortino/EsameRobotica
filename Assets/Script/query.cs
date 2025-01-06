@@ -7,7 +7,7 @@ using System;
 using System.Data.Common;
 using Unity.VisualScripting;
 
-public class Prova : MonoBehaviour{
+public class DatabaseManager : MonoBehaviour{
     private IDriver _driver;
     private IAsyncSession _session;
 

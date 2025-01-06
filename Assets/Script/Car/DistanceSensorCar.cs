@@ -7,7 +7,7 @@ public class DistanceSensorCar : MonoBehaviour
     public float fieldOfViewAngle = 30f; // Angolo totale del cono visivo
     public LayerMask detectionLayer; // Layer da rilevare (es. "Obstacles")
     public bool isSensorActive = true; // Stato attivo/disattivo del sensore
-    public float currentDistance = 0f; // Variabile pubblica per la distanza
+    public float currentDistance = Mathf.Infinity; // Variabile pubblica per la distanza
 
     void Update()
     {
@@ -19,27 +19,57 @@ public class DistanceSensorCar : MonoBehaviour
     }
 
     // Metodo per rilevare oggetti con un Raycast
-    void DetectObjects()
-    {
-        RaycastHit hit;
+    void DetectObjects(){
+        // Stato del rilevamento
+        bool isRobotDetected = false;
 
-        // Crea un LayerMask che esclude il layer "Robot"
-        int layerMask = LayerMask.GetMask("Robot"); // "~" inverte il mask per escludere il layer
+        Collider[] hits = Physics.OverlapSphere(transform.position, maxDistance);
 
-        // Lancia il Raycast ignorando il layer "Robot"
-        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance)){
-            if (hit.collider.CompareTag("Robot")){
-                Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
-                //Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
-                currentDistance=hit.distance;
+        foreach (var hit in hits){
+            if (hit.CompareTag("Robot")){
+                Vector3 targetDirection = hit.transform.position - transform.position;
+
+                float angleToTarget = Vector3.Angle(transform.forward, targetDirection);
+
+                if (angleToTarget <= fieldOfViewAngle / 2){
+                    float distance = Vector3.Distance(transform.position, hit.transform.position);
+
+                    Debug.DrawRay(transform.position, targetDirection.normalized * distance, Color.red);
+
+                    currentDistance = distance;
+                    isRobotDetected = true;
+
+                    break;
+                }
             }
         }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
-            //Debug.Log("Nessun Ostacolo rilevato");
+
+        if (!isRobotDetected){
+            currentDistance = Mathf.Infinity;
         }
     }
+
+
+    // void DetectObjects(){
+
+    //     bool isRobotDetected;
+    //     Collider[] hits = Physics.OverlapSphere(transform.position, maxDistance);
+
+    //     foreach (var hit in hits){
+    //         Vector3 targetDirection = hit.transform.position - transform.position;
+
+    //         float angleToTarget = Vector3.Angle(transform.forward, targetDirection);
+
+    //         // Verifica se è dentro il Field of View
+    //         if (angleToTarget <= fieldOfViewAngle / 2){
+    //             // Controlla se il tag è "Robot"
+    //             if (hit.CompareTag("Robot")){
+    //                 Debug.DrawLine(transform.position, hit.transform.position, Color.red);
+    //                 Debug.Log("Robot rilevato dentro il FOV!");
+    //             }
+    //         }
+    //     }
+    // }
 
 
     // Metodo per visualizzare il campo visivo con un cono di Gizmos
