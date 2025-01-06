@@ -19,26 +19,47 @@ public class DistanceSensor : MonoBehaviour
     }
 
     // Metodo per rilevare oggetti con un Raycast
-    void DetectObjects()
-    {
-        RaycastHit hit;
+    // void DetectObjects()
+    // {
+    //     RaycastHit hit;
 
-        // Crea un LayerMask che esclude il layer "Robot"
-        int layerMask = ~LayerMask.GetMask("Robot"); // "~" inverte il mask per escludere il layer
+    //     // Crea un LayerMask che esclude il layer "Robot"
+    //     int layerMask = ~LayerMask.GetMask("Robot"); // "~" inverte il mask per escludere il layer
 
-        // Lancia il Raycast ignorando il layer "Robot"
-        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance))
-        {
-            Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
-            //Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
-            currentDistance=hit.distance;
-        }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
-            //Debug.Log("Nessun Ostacolo rilevato");
+    //     // Lancia il Raycast ignorando il layer "Robot"
+    //     if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance))
+    //     {
+    //         Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
+    //         //Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
+    //         currentDistance=hit.distance;
+    //     }
+    //     else
+    //     {
+    //         Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
+    //         //Debug.Log("Nessun Ostacolo rilevato");
+    //     }
+    // }
+
+    void DetectObjects(){
+        // Stato del rilevamento
+        Collider[] hits = Physics.OverlapSphere(transform.position, maxDistance);
+
+        foreach (var hit in hits){
+            Vector3 targetDirection = hit.transform.position - transform.position;
+
+            float angleToTarget = Vector3.Angle(transform.forward, targetDirection);
+
+            if (angleToTarget <= fieldOfViewAngle / 2){
+                float distance = Vector3.Distance(transform.position, hit.transform.position);
+
+                Debug.DrawRay(transform.position, targetDirection.normalized * distance, Color.red);
+
+                currentDistance = distance;
+
+            }
         }
     }
+
 
 
     // Metodo per visualizzare il campo visivo con un cono di Gizmos
