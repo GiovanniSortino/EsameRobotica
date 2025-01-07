@@ -1,22 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+ 
+ 
 public class PercentageBattery : MonoBehaviour
 {
+    private DatabaseManager databaseManager;
+ 
     private float percentage = 100f;
     public float x_base;
     public float z_base;
     public float h_base;
     public float w_base;
     private float timer = 0f;
-
+ 
+    void Start()
+    {
+        databaseManager = DatabaseManager.GetDatabaseManager();
+    }
+ 
     // Update is called once per frame
-    void Update()
+    async void Update()
     {
         // Timer per scalare la batteria ogni secondo
         timer += Time.deltaTime; // Incrementa il timer
-        if (timer >= 1f) // Controlla se è passato 1 secondo
+        if (timer >= 1f) // Controlla se Ã¨ passato 1 secondo
         {
             if (percentage <= 0f)
             {
@@ -29,33 +37,30 @@ public class PercentageBattery : MonoBehaviour
                 timer = 0f; // Resetta il timer
                 Debug.Log("Batteria: " + percentage + "%"); // Stampa lo stato della batteria
             }
+            await databaseManager.SetBatteryLevelAsync((int)percentage);
         }
-
-        // Verifica se il robot è all'interno della piattaforma
+ 
+        // Verifica se il robot Ã¨ all'interno della piattaforma
         if (IsInsidePlatform())
         {
             percentage = 100f;
-            Debug.Log("Il robot si trova sulla piattaforma, si è ricaricato Batteria: 100%");
-        }
-        else
-        {
-            //Debug.Log("Il robot è fuori dalla piattaforma.");
+            Debug.Log("Il robot si trova sulla piattaforma, si Ã¨ ricaricato Batteria: 100%");
         }
     }
-
-    // Metodo per controllare se il robot è sulla piattaforma
+ 
+    // Metodo per controllare se il robot Ã¨ sulla piattaforma
     bool IsInsidePlatform()
     {
         // Ottieni la posizione del robot
         Vector3 robotPosition = transform.position;
-
+ 
         // Controlla se si trova nei limiti della piattaforma
         bool isInsideX = robotPosition.x >= x_base - w_base && robotPosition.x <= x_base + w_base;
         bool isInsideZ = robotPosition.z >= z_base - h_base && robotPosition.z <= z_base + h_base;
-
-        // Restituisce vero se è nei limiti sia su X che su Z
+ 
+        // Restituisce vero se Ã¨ nei limiti sia su X che su Z
         return isInsideX && isInsideZ;
     }
-
-
+ 
+ 
 }
