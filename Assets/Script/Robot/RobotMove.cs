@@ -5,13 +5,21 @@ using System.Threading.Tasks;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEditor.Experimental.GraphView;
+using UnityEngine.PlayerLoop;
 
 public class RobotMovement : MonoBehaviour{
 
     // public Transform target;
     public Transform plane;
     private float cellSize = 1.0f;
-    public DistanceSensor distanceSensor;
+    public DistanceSensor distanceSensorCenter;
+    public DistanceSensor distanceSensorLeft;
+    public DistanceSensor distanceSensorRight;
+    public float speed;
+    public float rotationSpeed;
+    public float obstacleDistance;
+
 
     public GripperController gripper;
 
@@ -29,6 +37,9 @@ public class RobotMovement : MonoBehaviour{
     private Cell nextCell;
 
     async void Start(){
+        offsetX = plane.localScale.x * 10f / 2f;
+        offsetZ = plane.localScale.z * 10f / 2f;
+        transform.position = GridToReal(new Cell(35, 35));
         GenerateGridFromPlane();
         aStar = new AStar();
         nextPosition = transform.position;
@@ -55,63 +66,94 @@ public class RobotMovement : MonoBehaviour{
 
     async void Update(){
 
-        // if (isProcessing) return;
-        // isProcessing = true;
+        if (isProcessing) return;
+        Vector3 direzioneTarget = nextPosition - transform.position;
+        float angle = Vector3.SignedAngle(transform.forward, direzioneTarget, Vector3.up);
+        Debug.Log($"angle {angle}");
 
-        // try{
-            if(target == null){
-                string zone = await databaseManager.GetYoungestMissingPersonAsync();
-                currentIndex = 0;
-                if(zone != null){
-                    target = FindCell(zone);
-                    if(target != null){
-                        Debug.Log($"posizione robot fisica {transform.position}, posizione cella: {RealToGrid(transform.position)}, posizione target {target}");
-                        path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target, grid);
-                        nextCell = path[currentIndex];
-                        nextPosition = GridToReal(nextCell);
-                        currentIndex++;
-                        Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
-                    }
-                }else{
+        if(target == null){
+            PathInitialization();
+        }else{
+            isProcessing = true;
+            // Debug.Log($"Nodo corrente: {currentIndex}/{path.Count}, Target Posizione: {nextPosition}");
+            // if (Vector3.Distance(transform.position, nextPosition) <= 0.1f){
+            nextCell = path[currentIndex];
+            nextPosition = GridToReal(nextCell);
+
+            autoIncrementCell++;
+            await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
+
+            float centerDistance = distanceSensorCenter.currentDistance;
+            float leftDistance = distanceSensorLeft.currentDistance;
+            float rightDistance = distanceSensorRight.currentDistance;
+
+            if(Mathf.Min(Mathf.Min(centerDistance, leftDistance), rightDistance) < obstacleDistance){                    
+                autoIncrementObstacle++;
+                grid[nextCell.x, nextCell.y] = 1;
+                await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+                target = null;
+                isProcessing = false;
+                return;
+            }
+            
+            if(currentIndex < path.Count-1){
+                currentIndex++;
+            }
+            // }
+
+            if((angle >= -90 && angle <= -1) || (angle >= 1 && angle <= 90)){
+                distanceSensorCenter.isSensorActive = false;
+                distanceSensorLeft.isSensorActive = false;
+                distanceSensorRight.isSensorActive = false;
+                Debug.Log("MOVIENTO ROTAZIONE");
+                RotateRobot(direzioneTarget);
+            }else{
+                Debug.Log("MOVIENTO MOVE");
+                Move(angle);
+            }  
+        }        
+    }
+
+    public async void PathInitialization(){
+        string zone = await databaseManager.GetYoungestMissingPersonAsync();
+        currentIndex = 0;
+        if(zone != null){
+            target = FindCell(zone);
+            if(target != null){
+                Debug.Log($"posizione robot fisica {transform.position}, posizione cella: {RealToGrid(transform.position)}, posizione target {target}");
+                path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target, grid);
+                if(path == null){
+                    target = null; //DA MODIFICAREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
                     return;
                 }
-            }else{
-
-                // Debug.Log($"Nodo corrente: {currentIndex}/{path.Count}, Target Posizione: {nextPosition}");
-                if (Vector3.Distance(transform.position, nextPosition) <= 0.2f){
-                    nextCell = path[currentIndex];
-                    nextPosition = GridToReal(nextCell);
-
-                    autoIncrementCell++;
-                    await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
-
-                    if(distanceSensor.currentDistance < 8f){                    
-                        autoIncrementObstacle++;
-                        grid[nextCell.x, nextCell.y] = 1;
-                        // await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-                        target = null;
-                    }
-                    
-                    if(currentIndex < path.Count-1){
-                        currentIndex++;
-                    }
-                }
-
-                // Calcola la direzione verso il nodo
-                Vector3 direzione = (nextPosition - transform.position).normalized;
-                Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
-
-                // Ruota verso il nodo
-                transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, 2f);
-                transform.position += transform.forward * 2f * Time.deltaTime;
+                nextCell = path[currentIndex];
+                nextPosition = GridToReal(nextCell);
+                currentIndex++;
+                Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
             }
-
-        // }catch (Exception ex){
-        //     Debug.LogError($"Errore in Update(): {ex.Message}");
-        // }finally{
-        //     isProcessing = false;
-        // }     
+        }else{
+            return;
+        }
     }
+
+    public void RotateRobot(Vector3 direction){
+        // transform.position = GridToReal(path[currentIndex-2]);
+        Quaternion rotazioneTarget = Quaternion.LookRotation(direction);
+        transform.rotation = rotazioneTarget;// Quaternion.Slerp(transform.rotation, rotazioneTarget, rotationSpeed);
+        isProcessing = false;
+        distanceSensorCenter.isSensorActive = true;
+        distanceSensorLeft.isSensorActive = true;
+        distanceSensorRight.isSensorActive = true;
+    }
+
+    public void Move(float angle){
+        float direction = (angle > -1 && angle < 1) ? 1 : -1;
+        while(Vector3.Distance(transform.position, nextPosition) > 0.1f){
+            transform.position += transform.forward * direction * speed * Time.deltaTime;
+        }
+        isProcessing = false;
+    }
+
 
 
     //crea la griglia 
@@ -145,8 +187,6 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private Vector2Int RealToGrid(Vector3 position){
-        offsetX = plane.localScale.x * 10f / 2f;
-        offsetZ = plane.localScale.z * 10f / 2f;
         return new Vector2Int(Mathf.FloorToInt(position.x + offsetX), Mathf.FloorToInt(position.z + offsetZ));
     }
 
