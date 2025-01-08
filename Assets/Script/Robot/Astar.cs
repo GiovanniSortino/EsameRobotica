@@ -3,22 +3,15 @@ using System.Linq;
 using UnityEngine;
 
 public class AStar{
-    private int[,] grid;              // Griglia (0 = libero, 1 = ostacolo)
     private int rows, cols;           // Dimensioni della griglia
 
     // Direzioni per esplorare i vicini (su, giù, sinistra, destra, diagonali)
     private Vector2Int[] directions = {
         new Vector2Int(0, 1), new Vector2Int(1, 0),
-        new Vector2Int(0, -1), new Vector2Int(-1, 0),
-        new Vector2Int(1, 1), new Vector2Int(1, -1),
-        new Vector2Int(-1, 1), new Vector2Int(-1, -1)
+        new Vector2Int(0, -1), new Vector2Int(-1, 0)//,
+        // new Vector2Int(1, 1), new Vector2Int(1, -1),
+        // new Vector2Int(-1, 1), new Vector2Int(-1, -1)
     };
-    public AStar(int[,] grid){
-        this.grid = grid;
-        rows = grid.GetLength(0); // Larghezza
-        cols = grid.GetLength(1); // Altezza
-        
-    }
 
     private List<Cell> RicostruisciPercorso(Cell cell){
         List<Cell> path = new List<Cell>();
@@ -34,13 +27,17 @@ public class AStar{
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 
-    private bool PosizioneValida(Vector2Int pos){
+    private bool PosizioneValida(Vector2Int pos, int[,] grid){
+        rows = grid.GetLength(0);
+        cols = grid.GetLength(1);
+        bool result = pos.x >= 0 && pos.x < rows && pos.y >= 0 && pos.y < cols && grid[pos.x, pos.y] == 0;
+        // Debug.Log($"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA {result}, {pos.x}, {pos.y}, {grid[pos.x, pos.y]}");
         // Controlla che la posizione sia nei limiti della griglia e non sia un ostacolo
-        return pos.x >= 0 && pos.x < rows && pos.y >= 0 && pos.y < cols && grid[pos.x, pos.y] == 0;
+        return result;
     }
 
 
-    public List<Cell> TrovaPercorso(Vector2Int start, Vector2Int goal){
+    public List<Cell> TrovaPercorso(Vector2Int start, Vector2Int goal, int[,] grid){
         // Liste di nodi aperti (da esplorare) e chiusi (già esplorati)
         List<Cell> openList = new List<Cell>();
         HashSet<Cell> closedList = new HashSet<Cell>();
@@ -70,7 +67,7 @@ public class AStar{
                 Vector2Int neighborPos = new Vector2Int(currentNode.x + direction.x, currentNode.y + direction.y);
 
                 // Salta i vicini non validi
-                if (!PosizioneValida(neighborPos))
+                if (!PosizioneValida(neighborPos, grid))
                     continue;
 
                 Cell neighbor = new Cell(neighborPos.x, neighborPos.y) { gCost = float.MaxValue };

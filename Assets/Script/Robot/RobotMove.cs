@@ -30,7 +30,7 @@ public class RobotMovement : MonoBehaviour{
 
     async void Start(){
         GenerateGridFromPlane();
-        aStar = new AStar(grid);
+        aStar = new AStar();
         nextPosition = transform.position;
 
         databaseManager = DatabaseManager.GetDatabaseManager();
@@ -47,9 +47,6 @@ public class RobotMovement : MonoBehaviour{
         await databaseManager.CreateRobotNodeAsync("R1", "Agente1", "C1", 20, 80);
         await databaseManager.CreateChargerBaseAsync("B1", "C1");
         await databaseManager.LoadDataFromCSV();
-
-        offsetX = plane.localScale.x * 10f / 2f; // Metà larghezza fisica del piano
-        offsetZ = plane.localScale.z * 10f / 2f; // Metà altezza fisica del piano
     }
 
     void OnApplicationQuit(){
@@ -58,16 +55,21 @@ public class RobotMovement : MonoBehaviour{
 
     async void Update(){
 
-        if (isProcessing) return;
-        isProcessing = true;
+        // if (isProcessing) return;
+        // isProcessing = true;
 
-        try{
+        // try{
             if(target == null){
                 string zone = await databaseManager.GetYoungestMissingPersonAsync();
+                currentIndex = 0;
                 if(zone != null){
                     target = FindCell(zone);
                     if(target != null){
-                        path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target);
+                        Debug.Log($"posizione robot fisica {transform.position}, posizione cella: {RealToGrid(transform.position)}, posizione target {target}");
+                        path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target, grid);
+                        nextCell = path[currentIndex];
+                        nextPosition = GridToReal(nextCell);
+                        currentIndex++;
                         Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
                     }
                 }else{
@@ -83,10 +85,11 @@ public class RobotMovement : MonoBehaviour{
                     autoIncrementCell++;
                     await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
 
-                    if(distanceSensor.currentDistance < 10f){                    
+                    if(distanceSensor.currentDistance < 8f){                    
                         autoIncrementObstacle++;
-                        // grid[nextCell.x, nextCell.y] = 1;
-                        await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+                        grid[nextCell.x, nextCell.y] = 1;
+                        // await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+                        target = null;
                     }
                     
                     if(currentIndex < path.Count-1){
@@ -99,15 +102,15 @@ public class RobotMovement : MonoBehaviour{
                 Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
 
                 // Ruota verso il nodo
-                transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, 5f);
-                transform.position += transform.forward * 5f * Time.deltaTime;
+                transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, 2f);
+                transform.position += transform.forward * 2f * Time.deltaTime;
             }
 
-        }catch (Exception ex){
-            Debug.LogError($"Errore in Update(): {ex.Message}");
-        }finally{
-            isProcessing = false;
-        }     
+        // }catch (Exception ex){
+        //     Debug.LogError($"Errore in Update(): {ex.Message}");
+        // }finally{
+        //     isProcessing = false;
+        // }     
     }
 
 
@@ -142,7 +145,9 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private Vector2Int RealToGrid(Vector3 position){
-        return new Vector2Int(Mathf.FloorToInt((position.x + offsetX) / cellSize), Mathf.FloorToInt((position.z + offsetZ) / cellSize));
+        offsetX = plane.localScale.x * 10f / 2f;
+        offsetZ = plane.localScale.z * 10f / 2f;
+        return new Vector2Int(Mathf.FloorToInt(position.x + offsetX), Mathf.FloorToInt(position.z + offsetZ));
     }
 
     private Vector3 GridToReal(Cell nextCell){
