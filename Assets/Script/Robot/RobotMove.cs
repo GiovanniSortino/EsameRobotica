@@ -3,13 +3,17 @@ using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 public class RobotMovement : MonoBehaviour{
 
-    public Transform target;
+    // public Transform target;
     public Transform plane;
     private float cellSize = 1.0f;
     public DistanceSensor distanceSensor;
+
+    public GripperController gripper;
 
     private List<Cell> path;
     private int currentIndex = 0;
@@ -20,8 +24,13 @@ public class RobotMovement : MonoBehaviour{
     private Vector3 nextPosition;
     private float offsetX;
     private float offsetZ;
+    private Vector2Int? target = null;
 
     async void Start(){
+        GenerateGridFromPlane();
+        aStar = new AStar(grid);
+        nextPosition = transform.position;
+
         databaseManager = DatabaseManager.GetDatabaseManager();
  
         await databaseManager.ResetDatabaseAsync();
@@ -37,12 +46,6 @@ public class RobotMovement : MonoBehaviour{
         await databaseManager.CreateChargerBaseAsync("B1", "C1");
         await databaseManager.LoadDataFromCSV();
 
-        GenerateGridFromPlane();
-        aStar = new AStar(grid);
-        nextPosition = transform.position;
-        Vector2Int posizionerobotGriglia = PosizioneRobotInGriglia();
-        CalcolaNuovoPercorso(posizionerobotGriglia);
-
         offsetX = plane.localScale.x * 10f / 2f; // Metà larghezza fisica del piano
         offsetZ = plane.localScale.z * 10f / 2f; // Metà altezza fisica del piano
     }
@@ -52,21 +55,34 @@ public class RobotMovement : MonoBehaviour{
     }
 
     async void Update(){
-        if(path!=null) {
-
+        if(target == null){
+            string zone = await databaseManager.GetYoungestMissingPersonAsync();
+            if(zone != null){
+                target = FindCell(zone);
+                if(target != null){
+                    path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target);
+                    currentIndex = 0; 
+                    Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
+                }
+            }else{
+                return;
+            }
+        }else{
             Debug.Log($"Nodo corrente: {currentIndex}/{path.Count}, Target Posizione: {nextPosition}");
 
-            // Debug.Log($"Nodo raggiunto: ({nextCell.x}, {nextCell.y})");
             if (Vector3.Distance(transform.position, nextPosition) <= 0.2f){
                 Cell nextCell = path[currentIndex];
-                nextPosition = new Vector3((nextCell.x * cellSize) - offsetX, transform.position.y, (nextCell.y * cellSize) - offsetZ);
+                nextPosition = GridToReal(nextCell);
 
                 autoIncrementCell++;
                 await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
-                if(distanceSensor.currentDistance < 1f){
+                Debug.Log($"OSTACOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO, {distanceSensor.currentDistance}");
+
+                if(distanceSensor.currentDistance < 10f){                    
                     autoIncrementObstacle++;
                     grid[nextCell.x, nextCell.y] = 1;
-                    // await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+                    Debug.Log("OSTACOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+                    await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
                     // path = null;
                 }
                 currentIndex++;
@@ -117,56 +133,22 @@ public class RobotMovement : MonoBehaviour{
         Debug.Log($"Dimensioni griglia: {gridWidth} x {gridHeight}");
     }
 
-    //identifica la posizione del robot nella griglia 
-    private Vector2Int PosizioneRobotInGriglia(){
-        // Calcola l'offset considerando la scala
-        float offsetX = plane.localScale.x * 5f; // 7 * 5 = 35
-        float offsetZ = plane.localScale.z * 5f; // 7 * 5 = 35
-
-        int x = Mathf.FloorToInt((transform.position.x + offsetX) / cellSize);
-        int y = Mathf.FloorToInt((transform.position.z + offsetZ) / cellSize);
-
-        Debug.Log($"Posizione robot fisica: {transform.position}, Griglia: ({x}, {y})");
-        return new Vector2Int(x, y);
-    }
-
-
     //identifica la posizione del target nella griglia 
-    private Vector2Int PosizioneTargetInGriglia(){
-        if (target == null){
-            Debug.LogError("Target non assegnato!");
-            return Vector2Int.zero;
-        }
+    private Vector2Int RealToGrid(Vector3 position){
 
         // Calcola l'offset considerando la scala
         float offsetX = plane.localScale.x * 5f; // 7 * 5 = 35
         float offsetZ = plane.localScale.z * 5f; // 7 * 5 = 35
 
-        int x = Mathf.FloorToInt((target.position.x + offsetX) / cellSize);
-        int y = Mathf.FloorToInt((target.position.z + offsetZ) / cellSize);
+        int x = Mathf.FloorToInt((position.x + offsetX) / cellSize);
+        int y = Mathf.FloorToInt((position.z + offsetZ) / cellSize);
 
-        Debug.Log($"Posizione target fisica: {target.position}, Griglia: ({x}, {y})");
+        Debug.Log($"Posizione target fisica: {position}, Griglia: ({x}, {y})");
         return new Vector2Int(x, y);
     }
 
-
-
-    //trova il percorso migliore per raggiungere il target
-    private void CalcolaNuovoPercorso(Vector2Int posizioneCorrente){
-        Vector2Int destinazione = PosizioneTargetInGriglia();
-
-        // Debug informazioni di partenza e destinazione
-        Debug.Log($"Partenza: {posizioneCorrente}, Destinazione: {destinazione}");
-
-        // Controlla se il percorso è calcolabile
-        path = aStar.TrovaPercorso(posizioneCorrente, destinazione);
-        currentIndex = 0; // Ripristina l'indice
-
-        if (path == null || path.Count == 0){
-            Debug.LogError("Nessun percorso disponibile!");
-        }else{
-            Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
-        }
+    private Vector3 GridToReal(Cell nextCell){
+        return new Vector3((nextCell.x * cellSize) - offsetX, transform.position.y, (nextCell.y * cellSize) - offsetZ);
     }
 
     private string FindZone(Cell cell){
@@ -174,5 +156,16 @@ public class RobotMovement : MonoBehaviour{
         int y = cell.y;
 
         return (x < 35) ? (y < 35 ? "Z1" : "Z3") : (y < 35 ? "Z2" : "Z4");
+    }
+
+    private Vector2Int FindCell(String zone){
+        if(zone == "Z1"){
+            return new Vector2Int(0, 0);
+        }else if(zone == "Z2"){
+            return new Vector2Int(35, 0);
+        }else if(zone == "Z3"){
+            return new Vector2Int(0, 35);
+        }
+        return new Vector2Int(35, 35);
     }
 }

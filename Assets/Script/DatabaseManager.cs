@@ -245,7 +245,7 @@ public class DatabaseManager{
         }
 
         // Elimina i dati esistenti per evitare duplicati
-        await ExecuteQueryAsync("MATCH (p:Persona) DETACH DELETE p;");
+        // await ExecuteQueryAsync("MATCH (p:Persona) DETACH DELETE p;");
 
         // Legge tutte le righe del CSV
         string[] lines = csvFile.text.Split('\n'); // Divide il file per righe
@@ -262,6 +262,7 @@ public class DatabaseManager{
 
             try{
                 // Estrai i valori delle colonne
+                string id = columns[0].Trim();
                 string nome = columns[1].Trim();
                 string cognome = columns[2].Trim();
                 string zona = columns[3].Trim();
@@ -269,9 +270,10 @@ public class DatabaseManager{
                 string stato = columns[5].Trim();
 
                 // Query per creare i nodi Persona
-                await ExecuteQueryAsync(
-                    $"CREATE (:Persona {{nome: '{nome}', cognome: '{cognome}', zona: '{zona}', eta: '{eta}', stato: '{stato}'}})"
-                );
+                await CreateMissingPersonNodeAsync(id, $"{nome} {cognome}", eta, "", "Disperso", zona);
+                // await ExecuteQueryAsync(
+                //     $"CREATE (:Persona {{id: '{id}', nome: '{nome}', cognome: '{cognome}', zona: '{zona}', eta: '{eta}', stato: '{stato}'}})"
+                // );
                 Debug.Log($"Dati caricati per {nome} {cognome}!");
             }catch (Exception ex){
                 Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
@@ -282,10 +284,10 @@ public class DatabaseManager{
     }
 
 
-    public async Task<(string id, string nome, int eta, string zona)> GetYoungestMissingPersonAsync(){
+    public async Task<string> GetYoungestMissingPersonAsync(){
         
         string query = @"
-            MATCH (p:Persona {stato: 'Disperso'})
+            MATCH (p:Disperso {stato_rilevamento: 'Disperso'})
             RETURN p.id AS id, p.nome AS nome, p.eta AS eta, p.zona AS zona
             ORDER BY p.eta ASC
             LIMIT 1";
@@ -300,11 +302,11 @@ public class DatabaseManager{
             string zona = result[0]["zona"].ToString();
 
             Debug.Log($"Persona trovata: {nome}, Età: {eta}, Zona: {zona}, ID: {id}");
-            return (id, nome, eta, zona);
+            return zona;
         }
 
         Debug.Log("Nessuna persona dispersa trovata.");
-        return (null, null, -1, null);
+        return null;
     }
 
 

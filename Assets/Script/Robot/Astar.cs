@@ -41,6 +41,7 @@ public class AStar{
 
 
     public List<Cell> TrovaPercorso(Vector2Int start, Vector2Int goal){
+        Debug.Log("SONO QUIIIIIIIIIIIIIIIIIIIIIIII");
         // Liste di nodi aperti (da esplorare) e chiusi (già esplorati)
         List<Cell> openList = new List<Cell>();
         HashSet<Cell> closedList = new HashSet<Cell>();
