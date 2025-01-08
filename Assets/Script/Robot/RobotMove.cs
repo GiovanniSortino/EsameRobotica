@@ -25,6 +25,8 @@ public class RobotMovement : MonoBehaviour{
     private float offsetX;
     private float offsetZ;
     private Vector2Int? target = null;
+    private bool isProcessing = false;
+    private Cell nextCell;
 
     async void Start(){
         GenerateGridFromPlane();
@@ -55,51 +57,57 @@ public class RobotMovement : MonoBehaviour{
     }
 
     async void Update(){
-        if(target == null){
-            string zone = await databaseManager.GetYoungestMissingPersonAsync();
-            if(zone != null){
-                target = FindCell(zone);
-                if(target != null){
-                    path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target);
-                    currentIndex = 0; 
-                    Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
+
+        if (isProcessing) return;
+        isProcessing = true;
+
+        try{
+            if(target == null){
+                string zone = await databaseManager.GetYoungestMissingPersonAsync();
+                if(zone != null){
+                    target = FindCell(zone);
+                    if(target != null){
+                        path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target);
+                        Debug.Log($"Percorso calcolato. Lunghezza: {path.Count}");
+                    }
+                }else{
+                    return;
                 }
             }else{
-                return;
-            }
-        }else{
-            Debug.Log($"Nodo corrente: {currentIndex}/{path.Count}, Target Posizione: {nextPosition}");
 
-            if (Vector3.Distance(transform.position, nextPosition) <= 0.2f){
-                Cell nextCell = path[currentIndex];
-                nextPosition = GridToReal(nextCell);
+                // Debug.Log($"Nodo corrente: {currentIndex}/{path.Count}, Target Posizione: {nextPosition}");
+                if (Vector3.Distance(transform.position, nextPosition) <= 0.2f){
+                    nextCell = path[currentIndex];
+                    nextPosition = GridToReal(nextCell);
 
-                autoIncrementCell++;
-                await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
-                Debug.Log($"OSTACOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO, {distanceSensor.currentDistance}");
+                    autoIncrementCell++;
+                    await databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
 
-                if(distanceSensor.currentDistance < 10f){                    
-                    autoIncrementObstacle++;
-                    grid[nextCell.x, nextCell.y] = 1;
-                    Debug.Log("OSTACOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-                    await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-                    // path = null;
+                    if(distanceSensor.currentDistance < 10f){                    
+                        autoIncrementObstacle++;
+                        // grid[nextCell.x, nextCell.y] = 1;
+                        await databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+                    }
+                    
+                    if(currentIndex < path.Count-1){
+                        currentIndex++;
+                    }
                 }
-                currentIndex++;
-                if(currentIndex >= path.Count){
-                    Debug.Log("Percorso completato!");
-                    path = null;
-                }
+
+                // Calcola la direzione verso il nodo
+                Vector3 direzione = (nextPosition - transform.position).normalized;
+                Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
+
+                // Ruota verso il nodo
+                transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, 5f);
+                transform.position += transform.forward * 5f * Time.deltaTime;
             }
 
-            // Calcola la direzione verso il nodo
-            Vector3 direzione = (nextPosition - transform.position).normalized;
-            Quaternion rotazioneTarget = Quaternion.LookRotation(direzione);
-
-            // Ruota verso il nodo
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotazioneTarget, 2f);
-            transform.position += transform.forward * 2f * Time.deltaTime;
-        }
+        }catch (Exception ex){
+            Debug.LogError($"Errore in Update(): {ex.Message}");
+        }finally{
+            isProcessing = false;
+        }     
     }
 
 
@@ -133,18 +141,8 @@ public class RobotMovement : MonoBehaviour{
         Debug.Log($"Dimensioni griglia: {gridWidth} x {gridHeight}");
     }
 
-    //identifica la posizione del target nella griglia 
     private Vector2Int RealToGrid(Vector3 position){
-
-        // Calcola l'offset considerando la scala
-        float offsetX = plane.localScale.x * 5f; // 7 * 5 = 35
-        float offsetZ = plane.localScale.z * 5f; // 7 * 5 = 35
-
-        int x = Mathf.FloorToInt((position.x + offsetX) / cellSize);
-        int y = Mathf.FloorToInt((position.z + offsetZ) / cellSize);
-
-        Debug.Log($"Posizione target fisica: {position}, Griglia: ({x}, {y})");
-        return new Vector2Int(x, y);
+        return new Vector2Int(Mathf.FloorToInt((position.x + offsetX) / cellSize), Mathf.FloorToInt((position.z + offsetZ) / cellSize));
     }
 
     private Vector3 GridToReal(Cell nextCell){
