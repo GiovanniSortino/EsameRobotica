@@ -50,7 +50,7 @@ public class AStar{
         while (openList.Count > 0){
             // Trova il nodo con il costo F più basso
             Cell currentNode = openList.OrderBy(n => n.fCost).First();
-            Debug.Log($"Nodo Esplorato: ({currentNode.x}, {currentNode.y}), fCost: {currentNode.fCost}");
+            // Debug.Log($"Nodo Esplorato: ({currentNode.x}, {currentNode.y}), fCost: {currentNode.fCost}");
 
             // Se raggiunge il nodo di destinazione, costruisce il percorso
             if (currentNode.x == goal.x && currentNode.y == goal.y){
