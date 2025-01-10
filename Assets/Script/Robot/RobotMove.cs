@@ -84,15 +84,15 @@ public class RobotMovement : MonoBehaviour{
     async void Update(){
         if(currentState == ProgramState.FindZone){
             currentState = ProgramState.WaitResponse;
+            zone = null;
             zone = await databaseManager.GetYoungestMissingPersonAsync();
         }else if(currentState == ProgramState.WaitResponse){
             if(zone != null) currentState = ProgramState.StartCalculation;
         }else if(currentState == ProgramState.StartCalculation){
-            nextMove = null;
+            // nextMove = null;
             CalculatePath();
-            zone = null;
         }else if(currentState == ProgramState.Calculating){
-            nextMove = null;
+            // nextMove = null;
             if(path != null) currentState = ProgramState.DistanceCalculation;
         }else if(currentState == ProgramState.DistanceCalculation){
             currentState = ProgramState.Wait;
@@ -101,8 +101,8 @@ public class RobotMovement : MonoBehaviour{
             currentState = DetectObstacle() ? ProgramState.FindZone : ProgramState.FoundNextMove;
         }else if(currentState == ProgramState.FoundNextMove){
             currentState = ProgramState.CalculationgNextMove;
-            nextMove = null;
-            nextMove = NextMovement();
+            // nextMove = null;
+            NextMovement();
             Debug.Log(nextMove);
         }else if(currentState == ProgramState.CalculationgNextMove){
             if(nextMove != null) currentState = ProgramState.Move;
@@ -117,7 +117,6 @@ public class RobotMovement : MonoBehaviour{
             target = FindCell(zone);
             if(target != null){
                 currentState = ProgramState.Calculating;
-                // Debug.Log($"posizione robot fisica {transform.position}, posizione cella: {RealToGrid(transform.position)}, posizione target {target}");
                 path = aStar.TrovaPercorso(RealToGrid(transform.position), (Vector2Int) target, grid);
             }
         }else{
@@ -173,10 +172,9 @@ public class RobotMovement : MonoBehaviour{
             Debug.Log($"OSTACOLO IN {obstacleCell.x}, {obstacleCell.y}");
             autoIncrementObstacle++;
             grid[obstacleCell.x, obstacleCell.y] = 1;
-            // printGrid(grid, RealToGrid(transform.position));
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            //_ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}"); //ATTENZIONE HO TOLTO AWAIT
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}"); //ATTENZIONE HO TOLTO AWAIT
             //////////////////////////////////////////////////////////////////////////////////////////////////////
             return true;
         }
@@ -196,23 +194,18 @@ public class RobotMovement : MonoBehaviour{
         return "Non adiacente";
     }
 
-    public string NextMovement(){
+    public void NextMovement(){
 
         Debug.Log($"NodoGriglia corrente: {currentIndex}/{path.Count}, Posizione corrente {transform.position}, Target Posizione: {nextPosition}");
         nextCell = path[currentIndex];
         nextPosition = GridToReal(nextCell);
-        // if(currentIndex < path.Count-1 && (nextMove == "forward")){
-        //         currentIndex++;
-        // }
-
         autoIncrementCell++;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //_ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell)); //ATTENZIONE HO TOLTO AWAIT
+        _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell)); //ATTENZIONE HO TOLTO AWAIT
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        string aa = OrientationToDirection();  
-        Debug.Log($"next move {aa}");
-        return aa; 
+        nextMove = OrientationToDirection();  
+        Debug.Log($"next move {nextMove}");
     }
 
     public int RobotOrientation(){
@@ -247,7 +240,11 @@ public class RobotMovement : MonoBehaviour{
             if(Vector3.Distance(transform.position, nextPosition) < 0.2f){
                 transform.position = nextPosition;
                 currentState = ProgramState.DistanceCalculation;
-                currentIndex++;
+                if(currentIndex < path.Count-1){
+                    currentIndex++;
+                }else{
+                    currentState = ProgramState.Wait;
+                }
             }
         }else if(nextMove == "backward"){
             transform.position -= transform.forward * speed * Time.deltaTime;
