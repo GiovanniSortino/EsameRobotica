@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using UnityEngine.UI; // Per usare UI
+using UnityEngine.UI;
 using System.Threading.Tasks;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -10,6 +10,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.PlayerLoop;
 using Palmmedia.ReportGenerator.Core;
 using Unity.Mathematics;
+
+//DEVO ESSERCI 1
 
 public class RobotMovement : MonoBehaviour{
 
@@ -64,7 +66,7 @@ public class RobotMovement : MonoBehaviour{
         nextPosition = transform.position;
 
         databaseManager = DatabaseManager.GetDatabaseManager();
- 
+
         await databaseManager.ResetDatabaseAsync();
 
         // Carica i dati nella base di conoscenza
@@ -91,10 +93,10 @@ public class RobotMovement : MonoBehaviour{
         }else if(currentState == ProgramState.WaitResponse){
             if(zone != null) currentState = ProgramState.StartCalculation;
         }else if(currentState == ProgramState.StartCalculation){
-            // nextMove = null;
+            nextMove = null;
             CalculatePath();
         }else if(currentState == ProgramState.Calculating){
-            // nextMove = null;
+            nextMove = null;
             if(path != null) currentState = ProgramState.DistanceCalculation;
         }else if(currentState == ProgramState.DistanceCalculation){
             currentState = ProgramState.Wait;
@@ -103,8 +105,11 @@ public class RobotMovement : MonoBehaviour{
             currentState = DetectObstacle() ? ProgramState.FindZone : ProgramState.FoundNextMove;
         }else if(currentState == ProgramState.FoundNextMove){
             currentState = ProgramState.CalculationgNextMove;
-            // nextMove = null;
+            nextMove = null;
             NextMovement();
+            if(nextMove == "NON ADIACENTI"){
+                currentState = ProgramState.FindZone;
+            }
             Debug.Log(nextMove);
         }else if(currentState == ProgramState.CalculationgNextMove){
             if(nextMove != null) currentState = ProgramState.Move;
@@ -170,14 +175,12 @@ public class RobotMovement : MonoBehaviour{
         if(distance < obstacleDistance){
             Debug.Log($"Ostacolo, distanza {distance}");
             distance = Mathf.Infinity;
-            
+
             Debug.Log($"OSTACOLO IN {obstacleCell.x}, {obstacleCell.y}");
             autoIncrementObstacle++;
             grid[obstacleCell.x, obstacleCell.y] = 1;
 
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}"); //ATTENZIONE HO TOLTO AWAIT
-            //////////////////////////////////////////////////////////////////////////////////////////////////////
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
             return true;
         }
         return false;
@@ -192,7 +195,6 @@ public class RobotMovement : MonoBehaviour{
         if (deltaX >= 0 && deltaY == 0) return "right";
         if (deltaX < 0 && deltaY == 0) return "left";
 
-        Debug.LogError("NON ADIACENTI");
         return "Non adiacente";
     }
 
@@ -203,12 +205,10 @@ public class RobotMovement : MonoBehaviour{
         nextPosition = GridToReal(nextCell);
         autoIncrementCell++;
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell)); //ATTENZIONE HO TOLTO AWAIT
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        nextMove = OrientationToDirection(); 
+        _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
+        nextMove = OrientationToDirection();
         actionText.text = "Azione: " + nextMove;
- 
+
         Debug.Log($"next move {nextMove}");
     }
 
@@ -299,11 +299,9 @@ public class RobotMovement : MonoBehaviour{
                 break;
 
             default:
-                Debug.Log($"La direzione relativa non è valida o le celle non sono adiacenti. {robotCell}, {targetCell}");
                 break;
         }
-
-        return null;
+        return "NON ADIACENTI";
     }
 
     public void GenerateGridFromPlane(){
