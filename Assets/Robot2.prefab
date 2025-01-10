@@ -152,7 +152,6 @@ MonoBehaviour:
   distanceSensorCenter: {fileID: 0}
   distanceSensorLeft: {fileID: 0}
   distanceSensorRight: {fileID: 0}
-  currentDistance: 0
 --- !u!1 &2105092398554822644
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,7 +253,6 @@ MonoBehaviour:
   distanceSensorCenter: {fileID: 0}
   distanceSensorLeft: {fileID: 0}
   distanceSensorRight: {fileID: 0}
-  currentDistance: 0
 --- !u!1 &2344640511171768520
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,7 +456,6 @@ MonoBehaviour:
   distanceSensorCenter: {fileID: 0}
   distanceSensorLeft: {fileID: 0}
   distanceSensorRight: {fileID: 0}
-  currentDistance: 0
 --- !u!1 &5889766296916498794
 GameObject:
   m_ObjectHideFlags: 0
@@ -744,7 +741,9 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4276295909021906671, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+    - {fileID: 8420563668962800842, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
     m_RemovedGameObjects:
     - {fileID: 2526868651756830883, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
     m_AddedGameObjects:
@@ -791,6 +790,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 6627116816336133370}
   display: {fileID: 0}
+  redPercentageText: {fileID: 0}
   targetColor: {r: 1, g: 0, b: 0, a: 1}
   colorTolerance: 0.1
   minPercentage: 0.1

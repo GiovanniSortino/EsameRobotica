@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI; // Per usare UI
 using System.Threading.Tasks;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
@@ -36,6 +37,7 @@ public class RobotMovement : MonoBehaviour{
     private string zone;
     private float distance = Mathf.Infinity;
     private Vector2Int obstacleCell = new Vector2Int(0, 0);
+    public Text actionText;
 
     private ProgramState currentState = ProgramState.FindZone;
 
@@ -204,7 +206,9 @@ public class RobotMovement : MonoBehaviour{
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell)); //ATTENZIONE HO TOLTO AWAIT
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        nextMove = OrientationToDirection();  
+        nextMove = OrientationToDirection(); 
+        actionText.text = "Azione: " + nextMove;
+ 
         Debug.Log($"next move {nextMove}");
     }
 
