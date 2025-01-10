@@ -301,7 +301,7 @@ public class DatabaseManager{
             int eta = Convert.ToInt32(result[0]["eta"]);
             string zona = result[0]["zona"].ToString();
 
-            //Debug.Log($"Persona trovata: {nome}, Età: {eta}, Zona: {zona}, ID: {id}");
+            // Debug.Log($"Persona trovata: {nome}, Età: {eta}, Zona: {zona}, ID: {id}");
             return zona;
         }
 
