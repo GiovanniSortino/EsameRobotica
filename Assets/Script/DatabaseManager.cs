@@ -343,9 +343,9 @@ public class DatabaseManager{
     }
 
     public async Task ComunicaConPersonaleAsync(string personaleId, string messaggio){
-        string query = @"
-            MATCH (r:Robot {id: 'R1'}), (pc:PersonaleCompetente {id: $personaleId})
-            CREATE (r)-[:COMUNICA {messaggio: $messaggio, timestamp: datetime()}]->(pc)";
+        string query = @$"
+            MATCH (r:Robot {{id: 'R1'}}), (pc:PersonaleCompetente {{id: '{personaleId}'}})
+            CREATE (r)-[:COMUNICA {{messaggio: '{messaggio}', timestamp: datetime()}}]->(pc)";
 
         await ExecuteQueryAsync(query, true);
         //Debug.Log($"Messaggio inviato: '{messaggio}' dal robot R1 al personale {personaleId}");

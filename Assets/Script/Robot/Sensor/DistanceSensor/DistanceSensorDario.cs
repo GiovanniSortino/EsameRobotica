@@ -5,7 +5,6 @@ public class DistanceSensorDario : MonoBehaviour
 {
     [Header("Configurazione Sensore")]
     public float maxDistance = 5;
-    public float currentDistance = Mathf.Infinity;
     private int layerMask;
 
     void Start()

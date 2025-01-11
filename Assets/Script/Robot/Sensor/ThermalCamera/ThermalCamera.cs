@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 public class ThermalCamera : MonoBehaviour
 {
@@ -20,26 +21,36 @@ public class ThermalCamera : MonoBehaviour
 
     public Texture2D texture;           // Per memorizzare i dati dei pixel
     private float percentage;
-    private int countFrame;
     public string idPerson;
     public RaycastHit person;
+    private DatabaseManager databaseManager;
+    
+    private float offsetX;
+    private float offsetZ;
+
+    private Vector2Int cella = new Vector2Int(0, 0);
+
+    public Transform plane;
+
+    public static bool detectPerson = false;
+
+    private float timer = 0f;
+    private int count;
+    private int countFrame = 0;
 
     void Start(){
         countFrame = 0;
+        databaseManager = DatabaseManager.GetDatabaseManager();
+        offsetX = plane.localScale.x * 10f / 2f;
+        offsetZ = plane.localScale.z * 10f / 2f;
+
         if (cam == null){
             Debug.LogError("Camera non assegnata!");
             return;
         }
 
-        // Inizializza la texture basata sulla dimensione dello schermo
         texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
 
-        // Debug delle impostazioni della telecamera
-        //Debug.Log($"Telecamera attiva: {cam.name}");
-        //Debug.Log($"Clear Flags: {cam.clearFlags}");
-        //Debug.Log($"Culling Mask: {cam.cullingMask}");
-
-        // Controllo del testo UI
         if (redPercentageText == null)
         {
             Debug.LogError("Nessun testo assegnato per la percentuale di rosso!");
@@ -47,6 +58,7 @@ public class ThermalCamera : MonoBehaviour
     }
 
     void Update(){
+        timer += Time.deltaTime; // Incrementa il timer
         countFrame++;
         if(countFrame >= 5){
             countFrame = 0;
@@ -54,48 +66,35 @@ public class ThermalCamera : MonoBehaviour
         }
     }
 
-    // Coroutine per attendere il rendering completo
     System.Collections.IEnumerator AnalyzeFrame()
     {
-        // Aspetta la fine del frame per assicurarsi che il rendering sia completo
         yield return new WaitForEndOfFrame();
 
-        // 1. Legge i dati dalla schermata attiva
         texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
         texture.Apply();
 
-        // 2. Mostra l'immagine nella UI (opzionale)
         if (display != null)
         {
             display.texture = texture;
         }
 
-        // 3. Analizza i pixel per trovare il colore dominante
         Color dominantColor;
         int pixelCount = CountDominantColor(texture, out dominantColor);
-        //Debug.Log($"Colore dominante: {dominantColor}, Pixel: {pixelCount}");
 
-        // 4. Controlla la percentuale di rosso
         bool isTargetPresent = CheckMaterialPresence(texture, targetColor, colorTolerance, minPercentage, out detectedPixelCount, out detectedPercentage);
-        //Debug.Log($"Materiale rilevato: {isTargetPresent}");
-        //Debug.Log($"Pixel rilevati: {detectedPixelCount}, Percentuale: {detectedPercentage * 100.0f}%");
 
-        // 5. Aggiorna la UI con la percentuale di rosso
         UpdateRedPercentageText();
     }
 
-    // Funzione per aggiornare il testo della percentuale di rosso
-    void UpdateRedPercentageText()
+    async void UpdateRedPercentageText()
     {
         if (redPercentageText != null)
         {
-            // Aggiorna la percentuale di calore
             redPercentageText.text = $"Percentuale di calore {(detectedPercentage * 100f):F2}%";
             detectedPercentage = detectedPercentage * 100f;
 
             if (detectedPercentage > 2.0f) // Se supera la soglia
             {
-                personDetect.text = "Disperso Rilevato";
                 person = DistanceSensor.hit; // Ottieni il RaycastHit
 
                 if (person.collider != null) // Controlla se c'è un collider
@@ -105,11 +104,31 @@ public class ThermalCamera : MonoBehaviour
                     if (personComponent != null)
                     {
                         idPerson = personComponent.GetID(); // Ottieni l'ID della persona
-                        Debug.Log($"ID Persona rilevata: {idPerson}");
-                    }
-                    else
-                    {
-                        Debug.LogError("Il componente Person non è presente sull'oggetto colpito.");
+
+                        cella = RealToGrid(transform.position);
+
+                        personDetect.text = $"Disperso {idPerson} \r\nCella {cella.x}, {cella.y}";
+                        detectPerson = true;
+
+                        if (count >= 20)
+                        {
+                            personDetect.text = "";
+                            person.collider.transform.root.gameObject.SetActive(false);
+                            //person.collider.gameObject.SetActive(false); // Disattiva l'oggetto della persona
+                            _ = databaseManager.UpdateMissingPersonNodeAsync(idPerson, cella);
+
+                            await databaseManager.ComunicaConPersonaleAsync("P1", $"Ho trovato la persona con ID {idPerson} nella cella {cella.x}, {cella.y}");
+                            detectPerson = false;
+                            count = 0;
+                        }
+                        else
+                        {
+                            count += 1;
+
+                        }
+
+                        //StartCoroutine(DeactivatePersonAfterDelay(person.collider.transform.root.gameObject, 5f));
+
                     }
                 }
             }
@@ -174,5 +193,14 @@ public class ThermalCamera : MonoBehaviour
         return Mathf.Abs(a.r - b.r) <= tolerance &&
                Mathf.Abs(a.g - b.g) <= tolerance &&
                Mathf.Abs(a.b - b.b) <= tolerance;
+    }
+
+    private Vector2Int RealToGrid(Vector3 position)
+    {
+        int x = Mathf.FloorToInt(position.x + offsetX);
+        int y = Mathf.FloorToInt(position.z + offsetZ);
+        x = x > 0 ? x : 0;
+        y = y > 0 ? y : 0;
+        return new Vector2Int(x, y);
     }
 }

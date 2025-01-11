@@ -23,6 +23,7 @@ public class RobotMovement : MonoBehaviour
     public MixDistance distanceSensorLeft;
     public MixDistance distanceSensorForward;
     public MixDistance distanceSensorRight;
+    public MixDistance distanceSensorBackward;
     public float speed;
     public float rotationSpeed;
     public float obstacleDistance;
@@ -33,7 +34,7 @@ public class RobotMovement : MonoBehaviour
     private int currentIndex;
     private AStar aStar;
     private AStarExploration aStarExplore;
-    private int[,] grid;
+    public int[,] grid;
     private DatabaseManager databaseManager;
     private int autoIncrementCell = 0, autoIncrementObstacle = 0;
     private Vector3 nextPosition;
@@ -44,6 +45,12 @@ public class RobotMovement : MonoBehaviour
     private string nextMove = null;
     private string zone;
     private float distance = Mathf.Infinity;
+    float distanceLeft = Mathf.Infinity;
+    float distanceForward = Mathf.Infinity;
+    float distanceRight = Mathf.Infinity;
+    private Vector2Int obstacleCellLeft = new Vector2Int(0, 0);
+    private Vector2Int obstacleCellForward = new Vector2Int(0, 0);
+    private Vector2Int obstacleCellRight = new Vector2Int(0, 0);
     private Vector2Int obstacleCell = new Vector2Int(0, 0);
     public Text actionText;
 
@@ -53,6 +60,7 @@ public class RobotMovement : MonoBehaviour
     private ExplorationState currentExplorationState = ExplorationState.StartCalculation;
     private bool car = false;
     private bool lowBattery = false;
+    private bool detectPerson = false;
 
     public enum ProgramState
     {
@@ -85,7 +93,7 @@ public class RobotMovement : MonoBehaviour
     {
         offsetX = plane.localScale.x * 10f / 2f;
         offsetZ = plane.localScale.z * 10f / 2f;
-        transform.position = GridToReal(new Cell(35, 35));
+        transform.position = GridToReal(new Cell(0, 7));
         GenerateGridFromPlane();
         aStar = new AStar();
         aStarExplore = new AStarExploration();
@@ -115,29 +123,50 @@ public class RobotMovement : MonoBehaviour
     void OnDrawGizmos()
     {
         float cellSize = 1f;
-        for (int x = 0; x < 70; x++)
+
+        if (grid == null)
         {
-            for (int z = 0; z < 70; z++)
+            Debug.LogWarning("La matrice 'grid' non è inizializzata.");
+            return;
+        }
+
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int z = 0; z < grid.GetLength(1); z++)
             {
                 Vector3 cellCenter = new Vector3(x * cellSize - offsetX, 0, z * cellSize - offsetZ);
 
-                Gizmos.color = Color.green;
-                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize));
+                switch (grid[x, z])
+                {
+                    case 0: // Cella libera
+                        Gizmos.color = Color.green;
+                        break;
+                    case 1: // Ostacolo
+                        Gizmos.color = Color.red;
+                        break;
+                    case 2: // Già visitata
+                        Gizmos.color = Color.blue;
+                        break;
+                    default: // Valore sconosciuto
+                        Gizmos.color = Color.gray;
+                        break;
+                }
 
-                // #if UNITY_EDITOR
-                // Handles.Label(cellCenter + new Vector3(0, 0.5f, 0), $"({x}, {z})");
-                // #endif
+                Gizmos.DrawCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize)); // Disegna il cubo pieno
+                Gizmos.color = Color.black;
+                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize)); // Disegna il bordo
             }
         }
     }
+
 
     async void Update()
     {
         car = Microphone.detectCar && !MicrophoneClacson.detectClacson;
         lowBattery = PercentageBattery.percentage <= 0;
+        detectPerson = ThermalCamera.detectPerson;
 
-        if (GripperController.isGripperActive || car || lowBattery)
-        {
+        if (GripperController.isGripperActive || car || lowBattery || detectPerson){
             return;
         }
 
@@ -218,7 +247,6 @@ public class RobotMovement : MonoBehaviour
 
             default:
                 break;
-
         }
     }
 
@@ -328,42 +356,53 @@ public class RobotMovement : MonoBehaviour
 
         Debug.Log($"Active Sensor: {activeSensor}");
 
+        distanceLeft = distanceSensorLeft.distance();
+        distanceForward = distanceSensorForward.distance();
+        distanceRight = distanceSensorRight.distance();
+
+        obstacleCellLeft = robotOrientation switch
+        {
+            0 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Nord
+            90 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Est
+            180 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Sud
+            270 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Ovest
+            _ => robotPosition // Orientamento non valido
+        };
+
+        obstacleCellForward = robotOrientation switch
+        {
+            0 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Nord
+            90 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Est
+            180 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Sud
+            270 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Ovest
+            _ => robotPosition // Orientamento non valido
+        };
+
+        obstacleCellRight = robotOrientation switch
+        {
+            0 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Nord
+            90 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Est
+            180 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Sud
+            270 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Ovest
+            _ => robotPosition // Orientamento non valido
+        };
+
         if (activeSensor == "left")
         {
-            distance = distanceSensorLeft.distance();
-            obstacleCell = robotOrientation switch
-            {
-                0 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Nord
-                90 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Est
-                180 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Sud
-                270 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Ovest
-                _ => robotPosition // Orientamento non valido
-            };
+            distance = distanceLeft;
+            obstacleCell = obstacleCellLeft;
         }
         else if (activeSensor == "forward")
         {
-            distance = distanceSensorForward.distance();
-            obstacleCell = robotOrientation switch
-            {
-                0 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Nord
-                90 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Est
-                180 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Sud
-                270 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Ovest
-                _ => robotPosition // Orientamento non valido
-            };
+            distance = distanceForward;
+            obstacleCell = obstacleCellForward;
         }
         else if (activeSensor == "right")
         {
-            distance = distanceSensorRight.distance();
-            obstacleCell = robotOrientation switch
-            {
-                0 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Nord
-                90 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Est
-                180 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Sud
-                270 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Ovest
-                _ => robotPosition // Orientamento non valido
-            };
+            distance = distanceRight;
+            obstacleCell = obstacleCellRight;
         }
+
         if (navigationMode == "Exploration")
         {
             currentExplorationState = ExplorationState.DetectObstacle;
@@ -384,6 +423,28 @@ public class RobotMovement : MonoBehaviour
         {
             currentState = ProgramState.Wait;
         }
+
+        if (distanceLeft < obstacleDistance)
+        {
+            autoIncrementObstacle++;
+            grid[obstacleCellLeft.x, obstacleCellLeft.y] = 1;
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+        }
+
+        if (distanceForward < obstacleDistance)
+        {
+            autoIncrementObstacle++;
+            grid[obstacleCellForward.x, obstacleCellForward.y] = 1;
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+        }
+
+        if (distanceRight < obstacleDistance)
+        {
+            autoIncrementObstacle++;
+            grid[obstacleCellRight.x, obstacleCellRight.y] = 1;
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+        }
+
         if (distance < obstacleDistance)
         {
             Debug.Log($"Ostacolo, distanza {distance}");
@@ -564,6 +625,7 @@ public class RobotMovement : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("HO CAMBIATO MODALITA IN NAVIGATION");
                     navigationMode = "Navigation";
                     currentState = ProgramState.FindZone;
                 }
@@ -579,52 +641,10 @@ public class RobotMovement : MonoBehaviour
                 currentExplorationState = ExplorationState.DistanceCalculation;
             }
         }
+        Debug.Log($"Mi sposto in ({explorationPath[currentIndex].x}, {explorationPath[currentIndex].y}), {explorationPath[currentIndex].gCost}");
         Vector2Int robotCell = RealToGrid(transform.position);
         grid[robotCell.x, robotCell.y] = 2;
     }
-
-   /* public async void DetectPerson()
-    {
-        if (thermalCamera.CheckMaterialPresence(thermalCamera.texture, thermalCamera.targetColor, thermalCamera.colorTolerance, thermalCamera.minPercentage, out thermalCamera.detectedPixelCount, out thermalCamera.detectedPercentage))
-        {
-            PersonID personID = FindClosestPerson();
-            if (personID != null)
-            {
-                string id = personID.GetID();
-                Debug.Log($"Persona trovata: ID = {id}");
-
-                _ = databaseManager.UpdateMissingPersonNodeAsync(id, RealToGrid(thermalCamera.transform.position));
-
-                await databaseManager.ComunicaConPersonaleAsync("P1", $"Ho trovato la persona con ID {id} nella cella {nextCell.x}, {nextCell.y}");
-            }
-            else
-            {
-                Debug.LogWarning("Nessuna persona trovata vicino all'area rilevata.");
-            }
-        }
-        else
-        {
-            Debug.Log("Nessun materiale rilevato.");
-        }
-    }
-
-    private PersonID FindClosestPerson()
-    {
-        PersonID[] persons = FindObjectsOfType<PersonID>();
-        PersonID closestPerson = null;
-        float closestDistance = float.MaxValue;
-
-        foreach (PersonID person in persons)
-        {
-            float distance = Vector3.Distance(person.transform.position, thermalCamera.transform.position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                closestPerson = person;
-            }
-        }
-        return closestPerson;
-    }*/
 
     public void GenerateGridFromPlane()
     {

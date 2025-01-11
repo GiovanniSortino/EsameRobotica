@@ -13,7 +13,7 @@ public class GripperController : MonoBehaviour
     public float chiusuraMinima = 0.1f;
 
     [Header("Riferimenti sensore distanza")]
-    public DistanceSensor distanceSensor;
+    public MixDistance mixDistance;
     public float targetDistance;
     public float distanceArm;
 
@@ -52,7 +52,7 @@ public class GripperController : MonoBehaviour
 
     void Update()
     {
-        targetDistance = distanceSensor.currentDistance;
+        targetDistance = mixDistance.distance();
         isGripperActive = currentState != GripperState.Idle;
 
         switch (currentState)

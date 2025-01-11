@@ -1,18 +1,14 @@
 using UnityEngine;
+using System.Linq;
 
 public class MixDistance : MonoBehaviour
 {
-
-    public DistanceSensorDario distanceSensorCenter;
-    public DistanceSensorDario distanceSensorLeft;
-    public DistanceSensorDario distanceSensorRight;
+    public DistanceSensorDario[] distanceSensors;
+    public float distanceCalculated;
 
     public float distance()
     {
-        float centerDistance = distanceSensorCenter.DetectObjects();
-        float leftDistance = distanceSensorLeft.DetectObjects();
-        float rightDistance = distanceSensorRight.DetectObjects();
-
-        return Mathf.Min(Mathf.Min(centerDistance, leftDistance), rightDistance);
+        distanceCalculated = distanceSensors.Min(sensor => sensor.DetectObjects());
+        return distanceCalculated;
     }
 }
