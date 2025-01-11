@@ -1,16 +1,17 @@
 using UnityEngine;
 
-public class MixDistance: MonoBehaviour{
+public class MixDistance : MonoBehaviour
+{
 
-    public DistanceSensor distanceSensorCenter;
-    public DistanceSensor distanceSensorLeft;
-    public DistanceSensor distanceSensorRight;
+    public DistanceSensorDario distanceSensorCenter;
+    public DistanceSensorDario distanceSensorLeft;
+    public DistanceSensorDario distanceSensorRight;
 
-    // Update is called once per frame
-    public float distance(){
-        float centerDistance = distanceSensorCenter.currentDistance;
-        float leftDistance = distanceSensorLeft.currentDistance;
-        float rightDistance = distanceSensorRight.currentDistance;
+    public float distance()
+    {
+        float centerDistance = distanceSensorCenter.DetectObjects();
+        float leftDistance = distanceSensorLeft.DetectObjects();
+        float rightDistance = distanceSensorRight.DetectObjects();
 
         return Mathf.Min(Mathf.Min(centerDistance, leftDistance), rightDistance);
     }

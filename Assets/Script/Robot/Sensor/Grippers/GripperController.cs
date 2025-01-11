@@ -28,6 +28,9 @@ public class GripperController : MonoBehaviour
     private bool isMovingBack = false;
     private bool relase = false;
 
+    public static bool isGripperActive = false; // Flag per indicare l'esecuzione
+
+
     enum GripperState
     {
         Idle,
@@ -50,6 +53,7 @@ public class GripperController : MonoBehaviour
     void Update()
     {
         targetDistance = distanceSensor.currentDistance;
+        isGripperActive = currentState != GripperState.Idle;
 
         switch (currentState)
         {
@@ -91,31 +95,37 @@ public class GripperController : MonoBehaviour
             case GripperState.Grabbing:
                 ControllaMovimentoPinza();
                 if (!isGrabbing) currentState = GripperState.RotatingForward;
+                Debug.Log("1");
                 break;
 
             case GripperState.RotatingForward:
                 Ruota(180f);
+                Debug.Log("2");
                 if (!rotationActive) currentState = GripperState.MovingForward;
                 IniziaMovimento(1f);
                 break;
 
             case GripperState.MovingForward:
+                Debug.Log("3");
                 MuoviAvanti(true);
                 if (!isMovingForward) currentState = GripperState.Releasing;
                 break;
 
             case GripperState.Releasing:
                 RilasciaOggetto();
+                Debug.Log("4");
                 if (!relase) currentState = GripperState.MovingBackward;
                 IniziaMovimento(-1f);
                 break;
 
             case GripperState.MovingBackward:
                 MuoviAvanti(false);
+                Debug.Log("5");
                 if (!isMovingBack) currentState = GripperState.RotatingBackward;
                 break;
 
             case GripperState.RotatingBackward:
+                Debug.Log("6");
                 Ruota(180f);
                 if (!rotationActive) currentState = GripperState.Idle;
                 break;
@@ -220,12 +230,25 @@ public class GripperController : MonoBehaviour
     {
         if (oggettoPreso != null) // Controlla se c'è un oggetto agganciato
         {
-            oggettoPreso.SetParent(null); // Scollega l'oggetto dalla pinza
+            // Scollega l'oggetto dalla pinza
+            oggettoPreso.SetParent(null);
 
-            // Qui rimosso l'uso di isKinematic
+            // Applica una forza all'oggetto se ha un Rigidbody
+            Rigidbody rb = oggettoPreso.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false; // Assicurati che la fisica sia attiva
+                Vector3 forceDirection = transform.forward; // Direzione in avanti rispetto alla pinza
+                float forceMagnitude = 2f; // Intensità della forza
+                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Impulse); // Applica la forza
+            }
 
-            oggettoPreso = null; // Resetta l'oggetto preso
+            // Resetta lo stato
+            oggettoPreso = null;
             relase = false;
+
+            Debug.Log("Oggetto rilasciato e lanciato in avanti.");
         }
     }
+
 }

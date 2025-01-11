@@ -11,7 +11,7 @@ public class CarPathFollower : MonoBehaviour
 
     public AudioSource audioSource;
     public AudioClip clip;
-    private bool isPlaying = false;
+    public static bool isPlaying = false;
 
     void Update(){
         if(distanceSensor.currentDistance > 5){
@@ -28,7 +28,7 @@ public class CarPathFollower : MonoBehaviour
             }
             isPlaying = false;
         }else if(!isPlaying){
-            audioSource.PlayOneShot(clip);
+            //audioSource.PlayOneShot(clip);
             isPlaying = true;
         }
     }

@@ -28,7 +28,7 @@ public class DatabaseManager{
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
             //Debug.Log("Connessione al database Neo4j riuscita!");
         }catch (System.Exception ex){
-            //Debug.LogError($"Errore durante la connessione o l'esecuzione della query: {ex.Message}");
+            Debug.LogError($"Errore durante la connessione o l'esecuzione della query: {ex.Message}");
         }
     }
 
@@ -86,7 +86,7 @@ public class DatabaseManager{
 
             //Debug.Log("Query eseguita con successo.");
         }catch (System.Exception ex){
-            //Debug.LogError($"Errore durante l'esecuzione della query: {ex.Message}");
+            Debug.LogError($"Errore durante l'esecuzione della query: {ex.Message}");
         }
 
         return results;
@@ -136,10 +136,11 @@ public class DatabaseManager{
         //Debug.Log($"Relazione Cerca creata: Robot_id=R1 Cerca Disperso_id={id}");
     }
 
-    public async Task UpdataeMissingPersonNodeAsync(String id, String nome, int eta, String cella, String stato, String zona){
-        string query = $"MATCH (d:Disperso {{id: '{id}'}}) SET d.cella = '{cella}', d.stato_rilevamento = 'Trovato' RETURN d";
+    public async Task UpdateMissingPersonNodeAsync(String id, Vector2Int cella){
+        string idCella = await GetIDCellFromPosition(cella);
+        string query = $"MATCH (d:Disperso {{id: '{id}'}}) SET d.cella = '{idCella}', d.stato_rilevamento = 'Trovato' RETURN d";
         await ExecuteQueryAsync(query);
-        ////Debug.Log($"Nodo Disperso creato: id={id}, nome={nome}, eta={eta}, cella={cella}, stato_rilevamento: '{stato}', zona: '{zona}'");        
+        ////Debug.Log($"Nodo Disperso creato: id={id}, nome={nome}, eta={eta}, cella={idCella}, stato_rilevamento: '{stato}', zona: '{zona}'");        
         query = $"MATCH (r:Robot {{id:'R1'}})-[rel:CERCA]->(d:Disperso {{id: '{id}'}}) DELETE rel";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Relazione Cerca rimossa: Robot_id=R1 Cerca Disperso_id:{id}");
@@ -276,7 +277,7 @@ public class DatabaseManager{
                 // );
                 //Debug.Log($"Dati caricati per {nome} {cognome}!");
             }catch (Exception ex){
-                //Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
+                Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
             }
         }
 
@@ -337,7 +338,7 @@ public class DatabaseManager{
                 //Debug.LogError("Aggiornamento stato fallito. Nessun risultato trovato.");
             }
         }catch (Exception ex){
-            //Debug.LogError($"Errore durante l'aggiornamento dello stato: {ex.Message}");
+            Debug.LogError($"Errore durante l'aggiornamento dello stato: {ex.Message}");
         }
     }
 
@@ -388,6 +389,17 @@ public class DatabaseManager{
         string query = $"MATCH (r:Robot {{id: 'R1'}}) SET r.livello_batteria = '{livello_batteria}'";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Robot aggiornato: robot_id: R1, livello_batteria: {livello_batteria}");
+    }
+
+    public async Task<string> GetIDCellFromPosition(Vector2Int cell){
+        string query = $"MATCH (c:Cella) WHERE c.posizione_x = {cell.x} AND c.posizione_y = {cell.y} RETURN c.id AS id_cella";
+        var result = await ExecuteQueryAsync(query);
+        if (result != null && result.Count > 0 && result[0].ContainsKey("id_cella"))
+        {
+            string id_cella = result[0]["id_cella"].ToString();
+            return id_cella;
+        }
+        return null;
     }
 
 }

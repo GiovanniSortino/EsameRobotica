@@ -8,6 +8,9 @@ TagManager:
   - Object
   - Robot
   - WayPoint
+  - Car
+  - Marmitta
+  - Clacson
   layers:
   - Default
   - TransparentFX
@@ -17,7 +20,7 @@ TagManager:
   - UI
   - Thermal
   - Robot
-  - 
+  - Car
   - 
   - 
   - 

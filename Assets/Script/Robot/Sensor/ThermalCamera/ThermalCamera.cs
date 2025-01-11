@@ -18,9 +18,11 @@ public class ThermalCamera : MonoBehaviour
     public int detectedPixelCount = 0;   // Numero di pixel rilevati
     public float detectedPercentage = 0; // Percentuale rilevata
 
-    private Texture2D texture;           // Per memorizzare i dati dei pixel
+    public Texture2D texture;           // Per memorizzare i dati dei pixel
     private float percentage;
     private int countFrame;
+    public string idPerson;
+    public RaycastHit person;
 
     void Start(){
         countFrame = 0;
@@ -87,15 +89,37 @@ public class ThermalCamera : MonoBehaviour
     {
         if (redPercentageText != null)
         {
+            // Aggiorna la percentuale di calore
             redPercentageText.text = $"Percentuale di calore {(detectedPercentage * 100f):F2}%";
             detectedPercentage = detectedPercentage * 100f;
-            if (detectedPercentage > 4.0f){
+
+            if (detectedPercentage > 2.0f) // Se supera la soglia
+            {
                 personDetect.text = "Disperso Rilevato";
-            }else{
-                personDetect.text = "";
-        }
+                person = DistanceSensor.hit; // Ottieni il RaycastHit
+
+                if (person.collider != null) // Controlla se c'è un collider
+                {
+                    // Verifica se l'oggetto colpito ha il componente "Person"
+                    var personComponent = person.collider.GetComponent<PersonComponent>();
+                    if (personComponent != null)
+                    {
+                        idPerson = personComponent.GetID(); // Ottieni l'ID della persona
+                        Debug.Log($"ID Persona rilevata: {idPerson}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Il componente Person non è presente sull'oggetto colpito.");
+                    }
+                }
+            }
+            else
+            {
+                personDetect.text = ""; // Nessun disperso rilevato
+            }
         }
     }
+
 
     // Funzione per trovare il colore dominante
     int CountDominantColor(Texture2D tex, out Color dominantColor)
@@ -126,7 +150,7 @@ public class ThermalCamera : MonoBehaviour
         return mostFrequent.Value;
     }
 
-    bool CheckMaterialPresence(Texture2D tex, Color targetColor, float tolerance, float minPercentage, out int matchingPixels, out float percentage)
+    public bool CheckMaterialPresence(Texture2D tex, Color targetColor, float tolerance, float minPercentage, out int matchingPixels, out float percentage)
     {
         matchingPixels = 0;
         int totalPixels = tex.width * tex.height;

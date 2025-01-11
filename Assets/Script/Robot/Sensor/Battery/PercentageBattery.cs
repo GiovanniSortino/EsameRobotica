@@ -9,7 +9,7 @@ public class PercentageBattery : MonoBehaviour
 
     public Text batteryText; // Riferimento al componente Text per la batteria
 
-    private float percentage = 100f; // Percentuale della batteria
+    public static float percentage = 100f; // Percentuale della batteria
     public float x_base;
     public float z_base;
     public float h_base;
@@ -32,7 +32,7 @@ public class PercentageBattery : MonoBehaviour
     }
 
     // Update viene chiamato una volta per frame
-    async void Update()
+    void Update()
     {
         // Timer per scalare la batteria ogni secondo
         timer += Time.deltaTime; // Incrementa il timer
@@ -47,7 +47,6 @@ public class PercentageBattery : MonoBehaviour
             {
                 percentage -= 1f; // Riduce la batteria di 1
                 timer = 0f; // Resetta il timer
-                Debug.Log("Batteria: " + percentage + "%"); // Stampa lo stato della batteria
 
                 // Aggiorna il testo nella UI
                 UpdateBatteryText();
@@ -62,7 +61,6 @@ public class PercentageBattery : MonoBehaviour
         {
             percentage = 100f; // Ricarica completa
             UpdateBatteryText(); // Aggiorna il testo
-            Debug.Log("Il robot si trova sulla piattaforma, si è ricaricato Batteria: 100%");
         }
     }
 

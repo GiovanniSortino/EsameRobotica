@@ -3,7 +3,7 @@ using UnityEngine;
 public class DistanceSensorCar : MonoBehaviour
 {
     [Header("Configurazione Sensore")]
-    public float maxDistance = 10f; // Distanza massima di rilevamento
+    public float maxDistance = 5f; // Distanza massima di rilevamento
     public float fieldOfViewAngle = 30f; // Angolo totale del cono visivo
     public LayerMask detectionLayer; // Layer da rilevare (es. "Obstacles")
     public bool isSensorActive = true; // Stato attivo/disattivo del sensore

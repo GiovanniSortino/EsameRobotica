@@ -1,0 +1,893 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &331999573310440145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8029048975600647330}
+  - component: {fileID: 3844151634780713339}
+  m_Layer: 7
+  m_Name: right
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8029048975600647330
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331999573310440145}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.67, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 349348033567807769}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3844151634780713339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331999573310440145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &1081096841121190321
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1290524826373106821}
+  - component: {fileID: 8132716419919363853}
+  m_Layer: 7
+  m_Name: left
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1290524826373106821
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081096841121190321}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.67, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 349348033567807769}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8132716419919363853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081096841121190321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &1539127056872816143
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6402835941695827466}
+  - component: {fileID: 8562704889693140649}
+  m_Layer: 7
+  m_Name: left
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6402835941695827466
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539127056872816143}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.92, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7851242688853561324}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8562704889693140649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539127056872816143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &4551642365976770515
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8501591025510737240}
+  - component: {fileID: 7458924317919352937}
+  m_Layer: 7
+  m_Name: left
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8501591025510737240
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4551642365976770515}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.92, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4016488544782285337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7458924317919352937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4551642365976770515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &4681217842976962096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 739186867880761339}
+  - component: {fileID: 4797406603310369975}
+  m_Layer: 7
+  m_Name: center
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &739186867880761339
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4681217842976962096}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4016488544782285337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4797406603310369975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4681217842976962096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: Infinity
+--- !u!1 &5458783166174735762
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8721803493725118899}
+  - component: {fileID: 309786185388982082}
+  m_Layer: 7
+  m_Name: right
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8721803493725118899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5458783166174735762}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.92, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4016488544782285337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &309786185388982082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5458783166174735762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &6475580072841605621
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 349348033567807769}
+  - component: {fileID: 3832382298373048812}
+  m_Layer: 7
+  m_Name: DistanceSensorCenter
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &349348033567807769
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6475580072841605621}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -116.23839, y: -134.37823, z: -3.2130203}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1290524826373106821}
+  - {fileID: 6225673382697921250}
+  - {fileID: 8029048975600647330}
+  m_Father: {fileID: 4784867762507424801}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3832382298373048812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6475580072841605621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa3b52c16b8fc94995d8a1c388f95a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  distanceSensorCenter: {fileID: 2360707756335102685}
+  distanceSensorLeft: {fileID: 8132716419919363853}
+  distanceSensorRight: {fileID: 3844151634780713339}
+--- !u!1 &7059992991716004467
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2543332779286006990}
+  - component: {fileID: 3902375444739268662}
+  m_Layer: 7
+  m_Name: center
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2543332779286006990
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7059992991716004467}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7851242688853561324}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3902375444739268662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7059992991716004467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: Infinity
+--- !u!1 &7175254337630878142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6225673382697921250}
+  - component: {fileID: 2360707756335102685}
+  m_Layer: 7
+  m_Name: center
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6225673382697921250
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7175254337630878142}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 349348033567807769}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2360707756335102685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7175254337630878142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: Infinity
+--- !u!1 &7349792852467798873
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7851242688853561324}
+  - component: {fileID: 2501045900475987562}
+  m_Layer: 7
+  m_Name: DistanceSensorLeft
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7851242688853561324
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7349792852467798873}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: -0.7071068}
+  m_LocalPosition: {x: -115.59839, y: -134.37823, z: -3.8530197}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6402835941695827466}
+  - {fileID: 2543332779286006990}
+  - {fileID: 429871857271853877}
+  m_Father: {fileID: 4784867762507424801}
+  m_LocalEulerAnglesHint: {x: 0, y: 270, z: 0}
+--- !u!114 &2501045900475987562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7349792852467798873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa3b52c16b8fc94995d8a1c388f95a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  distanceSensorCenter: {fileID: 3902375444739268662}
+  distanceSensorLeft: {fileID: 8562704889693140649}
+  distanceSensorRight: {fileID: 4529408016969795045}
+--- !u!1 &7893859902236883906
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 429871857271853877}
+  - component: {fileID: 4529408016969795045}
+  m_Layer: 7
+  m_Name: right
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &429871857271853877
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7893859902236883906}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.92, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 0.25, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7851242688853561324}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4529408016969795045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7893859902236883906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 5
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: 0
+--- !u!1 &9081060652160669602
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8439000368755769116}
+  - component: {fileID: 7682192611284649676}
+  m_Layer: 7
+  m_Name: DistanceSensor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8439000368755769116
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9081060652160669602}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.000000059604645, y: -0.1, z: 0.50000006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4784867762507424801}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7682192611284649676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9081060652160669602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7de1710f1cb1dfc47a9444c3993b6287, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDistance: 10
+  fieldOfViewAngle: 30
+  detectionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isSensorActive: 1
+  currentDistance: Infinity
+--- !u!1 &9196707123438821445
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4016488544782285337}
+  - component: {fileID: 7627839409436713201}
+  m_Layer: 7
+  m_Name: DistanceSensorRight
+  m_TagString: Robot
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4016488544782285337
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9196707123438821445}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -115.59839, y: -134.37823, z: -2.573021}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8501591025510737240}
+  - {fileID: 739186867880761339}
+  - {fileID: 8721803493725118899}
+  m_Father: {fileID: 4784867762507424801}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &7627839409436713201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9196707123438821445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa3b52c16b8fc94995d8a1c388f95a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  distanceSensorCenter: {fileID: 4797406603310369975}
+  distanceSensorLeft: {fileID: 7458924317919352937}
+  distanceSensorRight: {fileID: 309786185388982082}
+--- !u!1001 &5345917206016055511
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 360661561893124626, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: Robot 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.12
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 849907680153339184, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 849907680153339184, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: distanceSensor
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2526868651756830883, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: DistanceSensorCenter
+      objectReference: {fileID: 0}
+    - target: {fileID: 2570960326795877597, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2879150171794940991, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3371560374795715777, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3925532604236959537, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: Wheels
+      objectReference: {fileID: 0}
+    - target: {fileID: 4558124193901307614, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: fieldOfViewAngle
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5642661274357994677, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: 'WheelDxA '
+      objectReference: {fileID: 0}
+    - target: {fileID: 7007121075135268564, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7007121075135268564, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7007121075135268564, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.089
+      objectReference: {fileID: 0}
+    - target: {fileID: 7247158569878430348, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: WheelSxP
+      objectReference: {fileID: 0}
+    - target: {fileID: 7294782098277658820, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7294782098277658820, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7294782098277658820, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7734918793264133026, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Constraints
+      value: 116
+      objectReference: {fileID: 0}
+    - target: {fileID: 8086482754698202386, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: WheelSxA
+      objectReference: {fileID: 0}
+    - target: {fileID: 8420563668962800842, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8859467633771770004, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      propertyPath: m_Name
+      value: WheelDxP
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 4276295909021906671, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+    - {fileID: 8420563668962800842, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+    m_RemovedGameObjects:
+    - {fileID: 2526868651756830883, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8439000368755769116}
+    - targetCorrespondingSourceObject: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4016488544782285337}
+    - targetCorrespondingSourceObject: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 349348033567807769}
+    - targetCorrespondingSourceObject: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7851242688853561324}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 360661561893124626, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5864192297692289309}
+    - targetCorrespondingSourceObject: {fileID: 8714224934066421063, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 234719131423022446}
+  m_SourcePrefab: {fileID: 100100000, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+--- !u!20 &775422468261762868 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 4679901917170962403, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+  m_PrefabInstance: {fileID: 5345917206016055511}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3665831379689350544 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8714224934066421063, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+  m_PrefabInstance: {fileID: 5345917206016055511}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &234719131423022446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3665831379689350544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d86d10512660404ca4fb0fe1dc7e720, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cam: {fileID: 775422468261762868}
+  display: {fileID: 0}
+  redPercentageText: {fileID: 0}
+  personDetect: {fileID: 0}
+  targetColor: {r: 1, g: 0, b: 0, a: 1}
+  colorTolerance: 0.1
+  minPercentage: 0.1
+  detectedPixelCount: 0
+  detectedPercentage: 0
+--- !u!114 &4754668536794111463 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 849907680153339184, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+  m_PrefabInstance: {fileID: 5345917206016055511}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a6ddd68ada13ba4bb8e05d76ce003fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &4784867762507424801 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 601161002087972086, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+  m_PrefabInstance: {fileID: 5345917206016055511}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5706571555853214405 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 360661561893124626, guid: 4c0c414c8e041d14bb024b26f4e6baa9, type: 3}
+  m_PrefabInstance: {fileID: 5345917206016055511}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5864192297692289309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5706571555853214405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1162aca9209ab2a4c873663ae5ee7512, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  plane: {fileID: 0}
+  distanceSensorLeft: {fileID: 2501045900475987562}
+  distanceSensorForward: {fileID: 3832382298373048812}
+  distanceSensorRight: {fileID: 7627839409436713201}
+  speed: 1.5
+  rotationSpeed: 2
+  obstacleDistance: 2
+  gripper: {fileID: 4754668536794111463}
+  actionText: {fileID: 0}
