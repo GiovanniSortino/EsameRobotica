@@ -27,6 +27,7 @@ public class GripperController : MonoBehaviour
     private bool isMovingForward = false;
     private bool isMovingBack = false;
     private bool relase = false;
+    private bool flagTrigger = true;
 
     public static bool isGripperActive = false; // Flag per indicare l'esecuzione
 
@@ -44,7 +45,6 @@ public class GripperController : MonoBehaviour
 
     GripperState currentState = GripperState.Idle;
 
-
     private Quaternion targetRotation; // Rotazione target
     private float rotationProgress = 0f;
     public float moveSpeed = 5f;
@@ -58,6 +58,7 @@ public class GripperController : MonoBehaviour
         switch (currentState)
         {
             case GripperState.Idle:
+                flagTrigger = true;
                 if (targetDistance < 0.25f) currentState = GripperState.Grabbing;
                 break;
 
@@ -83,13 +84,10 @@ public class GripperController : MonoBehaviour
 
             case GripperState.RotatingBackward:
                 rotationActive = true;
+                flagTrigger = true;
                 break;
         }
-    }
 
-
-    void FixedUpdate()
-    {
         switch (currentState)
         {
             case GripperState.Grabbing:
@@ -133,6 +131,11 @@ public class GripperController : MonoBehaviour
     }
 
 
+    /*void FixedUpdate()
+    { 
+    }*/
+
+
     void ControllaMovimentoPinza()
     {
         if (oggettoPreso == null)
@@ -140,10 +143,9 @@ public class GripperController : MonoBehaviour
 
         // Fissa l'oggetto alla pinza
         oggettoPreso.SetParent(transform);
+        flagTrigger = false;
 
-        // Qui rimosso l'uso di isKinematic
-
-        Vector3 posSinistro = braccioSinistro.localPosition;
+        /*Vector3 posSinistro = braccioSinistro.localPosition;
         Vector3 posDestro = braccioDestro.localPosition;
 
         // Controlla se targetDistance è oltre i limiti
@@ -155,20 +157,20 @@ public class GripperController : MonoBehaviour
 
         // Imposta le posizioni limitate
         braccioSinistro.localPosition = posSinistro;
-        braccioDestro.localPosition = posDestro;
+        braccioDestro.localPosition = posDestro;*/
         isGrabbing = false;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Object"))
+        if (other.CompareTag("Object") && flagTrigger)
         {
             oggettoPreso = other.transform;
             object_detected = true;
         }
     }
 
-
+    //IN CASO DI ERRORE IN USCITA RIVEDERE QUESTO
     private void OnTriggerExit(Collider other)
     {
         if (!isGrabbing && oggettoPreso != null && other.transform == oggettoPreso)
@@ -184,17 +186,14 @@ public class GripperController : MonoBehaviour
             targetRotation = Quaternion.Euler(0, angle, 0) * robot.rotation;
         }
 
-        // Incrementa la progressione
         rotationProgress += rotationSpeed * Time.fixedDeltaTime / 180f;
 
-        // Interpolazione graduale
         robot.rotation = Quaternion.Slerp(robot.rotation, targetRotation, rotationProgress);
 
-        // Controlla se ha raggiunto la rotazione finale
         if (rotationProgress >= 1.0f)
         {
-            robot.rotation = targetRotation; // Forza l'angolo finale
-            rotationProgress = 0f;          // Resetta per rotazioni future
+            robot.rotation = targetRotation;
+            rotationProgress = 0f;          
 
             rotationActive = false;
         }
@@ -202,21 +201,19 @@ public class GripperController : MonoBehaviour
     }
     void IniziaMovimento(float distanza)
     {
-        isMovingForward = true; // Attiva lo stato di movimento
-        moveTarget = robot.position + robot.forward * distanza; // Calcola la destinazione
+        isMovingForward = true;
+        moveTarget = robot.position + robot.forward * distanza;
     }
 
     void MuoviAvanti(bool flag)
     {
-        // Muove il robot gradualmente verso il target
         robot.position = Vector3.MoveTowards(robot.position, moveTarget, moveSpeed * Time.fixedDeltaTime);
 
-        // Controlla se ha raggiunto la posizione desiderata
-        if (Vector3.Distance(robot.position, moveTarget) < 0.01f) // Precisione
+        if (Vector3.Distance(robot.position, moveTarget) < 0.01f)
         {
             if (flag)
             {
-                isMovingForward = false; // Ferma il movimento
+                isMovingForward = false;
             }
             else
             {
@@ -228,22 +225,19 @@ public class GripperController : MonoBehaviour
 
     void RilasciaOggetto()
     {
-        if (oggettoPreso != null) // Controlla se c'è un oggetto agganciato
+        if (oggettoPreso != null)
         {
-            // Scollega l'oggetto dalla pinza
             oggettoPreso.SetParent(null);
 
-            // Applica una forza all'oggetto se ha un Rigidbody
             Rigidbody rb = oggettoPreso.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.isKinematic = false; // Assicurati che la fisica sia attiva
-                Vector3 forceDirection = transform.forward; // Direzione in avanti rispetto alla pinza
-                float forceMagnitude = 2f; // Intensità della forza
-                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Impulse); // Applica la forza
+                rb.isKinematic = false;
+                Vector3 forceDirection = transform.forward;
+                float forceMagnitude = 2f;
+                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Impulse);
             }
 
-            // Resetta lo stato
             oggettoPreso = null;
             relase = false;
 

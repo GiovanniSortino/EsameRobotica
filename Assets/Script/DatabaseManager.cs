@@ -51,7 +51,6 @@ public class DatabaseManager{
         try{  
             await using var session = _driver.AsyncSession(o => o.WithDatabase("neo4j"));        
             if (isWrite){
-                // Per query di scrittura
                 await session.ExecuteWriteAsync(async tx =>{
                     var cursor = await tx.RunAsync(query);
 
@@ -67,7 +66,6 @@ public class DatabaseManager{
                     }
                 });
             }else{
-                // Per query di lettura
                 await session.ExecuteReadAsync(async tx =>{
                     var cursor = await tx.RunAsync(query);
 
@@ -97,7 +95,6 @@ public class DatabaseManager{
         var result = await ExecuteQueryAsync(query, false);
 
         if (result.Count > 0 && result[0].ContainsKey("count")){
-            // Convertire il valore in int in modo sicuro
             return System.Convert.ToInt32(result[0]["count"]);
         }
         return 0;
@@ -116,7 +113,7 @@ public class DatabaseManager{
     }
 
     public async Task CreateCellNodeAsync(String id, int x, int y, String zona){
-        string query = $"CREATE (:Cella {{id: '{id}', posizione_x: {x}, posizione_y: {y}, zona: '{zona}'}})";
+        string query = $"CREATE (:Cella {{id: '{id}', posizione_x: '{x}', posizione_y: '{y}', zona: '{zona}'}})";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Cella creato: id={id}, posizione_x={x}, posizione_y={y}, zona={zona}");
         query = $"MATCH (c:Cella {{id: '{id}'}}), (z:Zona {{id:'{zona}'}}) CREATE (z)-[:E_FORMATA]->(c);";
@@ -125,7 +122,7 @@ public class DatabaseManager{
     }
 
     public async Task CreateMissingPersonNodeAsync(String id, String nome, int eta, String cella, String stato, String zona){
-        string query = $"CREATE (:Disperso {{id: '{id}', nome: '{nome}', eta: {eta}, cella: '{cella}', stato_rilevamento: '{stato}', zona: '{zona}'}})";
+        string query = $"CREATE (:Disperso {{id: '{id}', nome: '{nome}', eta: '{eta}', cella: '{cella}', stato_rilevamento: '{stato}', zona: '{zona}'}})";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Disperso creato: id={id}, nome={nome}, eta={eta}, cella={cella}, stato_rilevamento: '{stato}', zona: '{zona}'");        
         query = $"MATCH (z:Zona {{id: '{zona}'}}), (d:Disperso {{id:'{id}'}}) CREATE (d)-[:APPARTIENE]->(z);";
@@ -208,69 +205,30 @@ public class DatabaseManager{
         return 0;
     }
 
-    public async Task<(int x, int y)> GetRobotPositionAsync(){
-        // Prima query: Trova la cella associata al robot
-        string queryCella = "MATCH (r:Robot {id: 'R1'}) RETURN r.cella AS id_cella";
-
-        var resultCella = await ExecuteQueryAsync(queryCella);
-
-        if (resultCella.Count == 0 || !resultCella[0].ContainsKey("id_cella")){
-            //Debug.LogError("Impossibile trovare la cella associata al robot.");
-            return (-1, -1);
-        }
-
-        // Estrai l'ID della cella
-        string id_cella = resultCella[0]["id_cella"].ToString();
-        string queryPosition = $"MATCH (c:Cella {{id: '{id_cella}'}}) RETURN c.x AS x, c.y AS y";
-
-        var resultPosition = await ExecuteQueryAsync(queryPosition);
-
-        if (resultPosition.Count > 0 && resultPosition[0].ContainsKey("x") && resultPosition[0].ContainsKey("y")){
-            int x = Convert.ToInt32(resultPosition[0]["x"]);
-            int y = Convert.ToInt32(resultPosition[0]["y"]);
-            //Debug.Log($"Posizione del robot: x={x}, y={y}");
-            return (x, y);
-        }
-
-        //Debug.LogError("Impossibile trovare la posizione della cella.");
-        return (-1, -1);
-    }
-
-     // Metodo per leggere il CSV e caricare i dati
     public async System.Threading.Tasks.Task LoadDataFromCSV(){
-        // Percorso del file all'interno delle Resources
         TextAsset csvFile = Resources.Load<TextAsset>("persone_disperse");
         if (csvFile == null){
             //Debug.LogError("File CSV non trovato!");
-            return; // Esce dal metodo
+            return;
         }
 
-        // Elimina i dati esistenti per evitare duplicati
         // await ExecuteQueryAsync("MATCH (p:Persona) DETACH DELETE p;");
+        string[] lines = csvFile.text.Split('\n'); 
+        for (int i = 1; i < lines.Length-1; i++){ 
+            string[] columns = lines[i].Split(',');
 
-        // Legge tutte le righe del CSV
-        string[] lines = csvFile.text.Split('\n'); // Divide il file per righe
-
-        // Ciclo per elaborare ogni riga
-        for (int i = 1; i < lines.Length-1; i++){ // Salta la prima riga se è un'intestazione
-            string[] columns = lines[i].Split(','); // Divide ogni riga per colonne
-
-            // Controlla che la riga sia valida
             if (columns.Length < 6){
                 //Debug.LogWarning($"Riga {i + 1} ha un formato non valido e sarà ignorata.");
-                continue; // Salta questa iterazione del ciclo
+                continue;
             }
 
             try{
-                // Estrai i valori delle colonne
                 string id = columns[0].Trim();
                 string nome = columns[1].Trim();
                 string cognome = columns[2].Trim();
                 string zona = columns[3].Trim();
                 int eta = int.Parse(columns[4].Trim());
                 string stato = columns[5].Trim();
-
-                // Query per creare i nodi Persona
                 await CreateMissingPersonNodeAsync(id, $"{nome} {cognome}", eta, "", "Disperso", zona);
                 // await ExecuteQueryAsync(
                 //     $"CREATE (:Persona {{id: '{id}', nome: '{nome}', cognome: '{cognome}', zona: '{zona}', eta: '{eta}', stato: '{stato}'}})"
@@ -285,26 +243,88 @@ public class DatabaseManager{
     }
 
 
-    public async Task<string> GetYoungestMissingPersonAsync(){
-        
+    public async Task<string> GetRobotZoneAsync(){
         string query = @"
-            MATCH (p:Disperso {stato_rilevamento: 'Disperso'})
-            RETURN p.id AS id, p.nome AS nome, p.eta AS eta, p.zona AS zona
-            ORDER BY p.eta ASC
+            MATCH (r:Robot), (c:Cella)
+            WHERE r.cella = c.id
+            RETURN c.zona AS zona
             LIMIT 1";
 
         var result = await ExecuteQueryAsync(query, false);
 
-        if (result.Count > 0 && result[0].ContainsKey("id")){
-            // Estrai i valori dalla query
-            string id = result[0]["id"].ToString();
-            string nome = result[0]["nome"].ToString();
-            int eta = Convert.ToInt32(result[0]["eta"]);
+        if (result.Count > 0 && result[0].ContainsKey("zona")){
+            return result[0]["zona"].ToString();
+        }
+        return null;
+    }
+
+    public async Task<string> GetBaseCell(){
+        string query = "MATCH (b:Base) RETURN b.cella AS cella";
+        var result = await ExecuteQueryAsync(query, false); 
+        if(result.Count > 0 && result[0].ContainsKey("cella")){
+            return result[0]["cella"].ToString();
+        }
+        return null;
+    }
+
+    
+
+    public async Task<string> GetYoungestMissingPersonAsync(){
+        
+        // string query = @"
+        //     MATCH (p:Disperso {stato_rilevamento: 'Disperso'})
+        //     RETURN p.id AS id, p.nome AS nome, p.eta AS eta, p.zona AS zona
+        //     ORDER BY p.eta ASC
+        //     LIMIT 1";
+        
+        int batteryLevel = await GetBatteryLevelAsync();
+        Debug.Log($"batteryLevel {batteryLevel}");
+        string robotZone = await GetRobotZoneAsync();
+        Debug.Log($"robotZone {robotZone}");
+        string baseCell = await GetBaseCell();
+        Debug.Log($"baseCell {baseCell}");
+
+        string query = @$"
+                MATCH (p:Disperso {{stato_rilevamento: 'Disperso'}})
+                WITH p.zona AS zona, 
+                    COUNT(CASE WHEN p.eta < 12 THEN 1 ELSE NULL END) AS under12Count
+                WITH 
+                    zona,
+                    under12Count,
+                    CASE
+                        WHEN {batteryLevel} < 20 THEN '{baseCell}'
+                        WHEN {batteryLevel} < 50 AND zona = '{robotZone}' THEN zona
+                        ELSE zona
+                    END AS result,
+                    CASE
+                        WHEN {batteryLevel} < 20 THEN 0
+                        WHEN {batteryLevel} < 50 AND zona = '{robotZone}' THEN 1
+                        ELSE 2
+                    END AS priority
+                ORDER BY 
+                    priority ASC,
+                    under12Count DESC
+                RETURN 
+                    result AS zona
+                LIMIT 1";
+
+        
+
+        var result = await ExecuteQueryAsync(query, false);
+        Debug.Log($"RESULT {result}");
+
+        if (result.Count > 0 && result[0].ContainsKey("zona")){
+            // string id = result[0]["id"].ToString();
+            // string nome = result[0]["nome"].ToString();
+            // int eta = Convert.ToInt32(result[0]["eta"]);
             string zona = result[0]["zona"].ToString();
 
             // Debug.Log($"Persona trovata: {nome}, Età: {eta}, Zona: {zona}, ID: {id}");
+            Debug.Log($"RESULT {zona}");
+
             return zona;
         }
+        
 
         //Debug.Log("Nessuna persona dispersa trovata.");
         return null;
@@ -313,23 +333,19 @@ public class DatabaseManager{
 
     public async Task UpdatePersonStatusAsync(string id, string nuovoStato){
 
-        // Controlla che l'ID sia valido
         if (string.IsNullOrEmpty(id)){
             //Debug.LogError("ID non valido. Aggiornamento stato fallito.");
             return;
         }
 
         try{
-            // Query per aggiornare lo stato della persona
-            string query = @"
-                MATCH (p:Persona {id: $id})
-                SET p.stato = $nuovoStato
+            string query = @$"
+                MATCH (p:Persona {{id: '{id}'}})
+                SET p.stato = '{nuovoStato}'
                 RETURN p.nome AS nome, p.stato AS stato";
 
-            // Esegui la query con i parametri
             var result = await ExecuteQueryAsync(query, true);
 
-            // Controlla se l'aggiornamento ha avuto successo
             if (result.Count > 0 && result[0].ContainsKey("nome") && result[0].ContainsKey("stato")){
                 string nome = result[0]["nome"].ToString();
                 string statoAggiornato = result[0]["stato"].ToString();
@@ -345,7 +361,7 @@ public class DatabaseManager{
     public async Task ComunicaConPersonaleAsync(string personaleId, string messaggio){
         string query = @$"
             MATCH (r:Robot {{id: 'R1'}}), (pc:PersonaleCompetente {{id: '{personaleId}'}})
-            CREATE (r)-[:COMUNICA {{messaggio: '{messaggio}', timestamp: datetime()}}]->(pc)";
+            CREATE (r)-[:COMUNICA {{messaggio: '{messaggio}'}}]->(pc)";
 
         await ExecuteQueryAsync(query, true);
         //Debug.Log($"Messaggio inviato: '{messaggio}' dal robot R1 al personale {personaleId}");
@@ -362,30 +378,30 @@ public class DatabaseManager{
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Robot creato: id={id}, nome={nome}, cella={cella}, livello_minimo_batteria:{livello_minimo_batteria}, livello_massimo_batteria:{livello_massimo_batteria}");
  
-        query = $"MATCH (r:Robot {{id: '{"R1"}'}}), (z:Zona) CREATE (r)-[:ESPLORA]->(z);";
+        query = $"MATCH (r:Robot {{id: 'R1'}}), (z:Zona) CREATE (r)-[:ESPLORA]->(z);";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Relazione Esplora creata: Robot_id=R1 Comunica Zona={id}");
     }
  
     public async Task CreateZoneNodeAsync(String id, int min_x, int min_y, int max_x, int max_y, bool visitata){
-        string query = $"CREATE (:Zona {{ id: '{id}', min_x: {min_x}, min_y: {min_y}, max_x: {max_x}, max_y: {max_y}, visitata: {(visitata ? "true" : "false")} }})";
+        string query = $"CREATE (:Zona {{ id: '{id}', min_x: {min_x}, min_y: {min_y}, max_x: {max_x}, max_y: {max_y}, visitata: '{(visitata ? "true" : "false")}' }})";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Zona creato: id={id}, min_x={min_x}, min_y={min_y}, max_x={max_x},max_y={max_y}, visitata: '{visitata}'");
     }
 
-    public async Task RobotRilevaDispersoAsync(String idR, String idD){
-        string query = $"MATCH (r:Robot {{id:'{idR}'}}), (d:Disperso {{id: '{idD}'}}) CREATE (r)-[:RILEVA]->(d)";
+    public async Task RobotRilevaDispersoAsync(String idD){
+        string query = $"MATCH (r:Robot {{id:'R1'}}), (d:Disperso {{id: '{idD}'}}) CREATE (r)-[:RILEVA]->(d)";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Relazione Rileva creata: Robot_id={idR} Comunica Disperso={idD}");
     }
     
-    public async Task RobotSegnalaPersonaleCompetenteAsync(String idR, string idPc){
-        string query = $"MATCH (r:Robot {{id:'{idR}'}}), (pc:Personale_Competente {{id: '{idPc}'}}) CREATE (r)-[:SEGNALA]->(pc)";
+    public async Task RobotSegnalaPersonaleCompetenteAsync(string idPc){
+        string query = $"MATCH (r:Robot {{id:'R1'}}), (pc:Personale_Competente {{id: '{idPc}'}}) CREATE (r)-[:SEGNALA]->(pc)";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Relazione Segnala creata: Robot_id={idR} Segnala Personale_Competente_id={idPc}");
     }
 
-    public async Task SetBatteryLevelAsync(int livello_batteria, string idR="R1"){
+    public async Task SetBatteryLevelAsync(int livello_batteria){
         string query = $"MATCH (r:Robot {{id: 'R1'}}) SET r.livello_batteria = '{livello_batteria}'";
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Robot aggiornato: robot_id: R1, livello_batteria: {livello_batteria}");
