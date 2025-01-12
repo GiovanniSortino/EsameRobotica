@@ -10,6 +10,5 @@ ID,Nome,Cognome,Zona,Eta,Stato
 9,Luigi,Rossi,Z4,30,Disperso
 10,Federico,Bianchi,Z1,33,Disperso
 11,Ferdinando,Magenta,Z1,50,Disperso
-12,Ornella,Bruni,Z1,57,Disperso
-13,Maria,Viola,Z1,29,Disperso
-14,Maria,Viola,Z1,0,Disperso
+12,Ornella,Bruni,Z2,10,Disperso
+13,Maria,Viola,Z2,10,Disperso

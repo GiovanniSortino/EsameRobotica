@@ -287,7 +287,7 @@ public class DatabaseManager{
         string query = @$"
                 MATCH (p:Disperso {{stato_rilevamento: 'Disperso'}})
                 WITH p.zona AS zona, 
-                    COUNT(CASE WHEN p.eta < 12 THEN 1 ELSE NULL END) AS under12Count
+                    COUNT(CASE WHEN p.eta <= 12 THEN 1 ELSE 0 END) AS under12Count
                 WITH 
                     zona,
                     under12Count,

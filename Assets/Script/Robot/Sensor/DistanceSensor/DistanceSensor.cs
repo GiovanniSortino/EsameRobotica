@@ -33,7 +33,7 @@ public class DistanceSensor : MonoBehaviour
         if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask))
         {
             Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
-            Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
+            // Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
             currentDistance = hit.distance;
         }
         else

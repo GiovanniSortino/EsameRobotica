@@ -1,46 +1,35 @@
 using System;
 using UnityEngine;
 
-public class DistanceSensorDario : MonoBehaviour
-{
+public class DistanceSensorDario : MonoBehaviour{
     [Header("Configurazione Sensore")]
     public float maxDistance = 5;
     private int layerMask;
 
-    void Start()
-    {
+    void Start(){
         layerMask = ~LayerMask.GetMask("Robot");
     }
 
-    void Update()
-    {
+    void Update(){
         RaycastHit hit;
-        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask))
-        {
+        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask) && !hit.collider.CompareTag("Person")){
             Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
-        }
-        else
-        {
+        }else{
             Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
         }
     }
 
-    public float DetectObjects()
-    {
+    public float DetectObjects(){
         RaycastHit hit;
-        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask))
-        {
+        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask) && !hit.collider.CompareTag("Person")){
             return hit.distance;
-        }
-        else
-        {
+        }else{
             Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
             return Mathf.Infinity;
         }
     }
 
-    void OnDrawGizmos()
-    {
+    void OnDrawGizmos(){
         Gizmos.color = new Color(0, 1, 1, 0.3f);
 
         int segments = 20;

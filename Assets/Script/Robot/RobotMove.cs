@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,13 +33,15 @@ public class RobotMovement : MonoBehaviour
     private string nextMove = null;
     private string zone;
     private float distance = Mathf.Infinity;
-    float distanceLeft = Mathf.Infinity;
-    float distanceForward = Mathf.Infinity;
-    float distanceRight = Mathf.Infinity;
+    private float distanceLeft = Mathf.Infinity;
+    private float distanceForward = Mathf.Infinity;
+    private float distanceRight = Mathf.Infinity;
+    private float distanceBackward = Mathf.Infinity;
+    private Vector2Int obstacleCell = new Vector2Int(0, 0);
     private Vector2Int obstacleCellLeft = new Vector2Int(0, 0);
     private Vector2Int obstacleCellForward = new Vector2Int(0, 0);
     private Vector2Int obstacleCellRight = new Vector2Int(0, 0);
-    private Vector2Int obstacleCell = new Vector2Int(0, 0);
+    private Vector2Int obstacleCellBackward = new Vector2Int(0, 0);
     public Text actionText;
 
     private string navigationMode = "Navigation";
@@ -153,66 +156,67 @@ public class RobotMovement : MonoBehaviour
                 break;
             }
             case ProgramState.FindZone:{
-                    currentState = ProgramState.WaitResponse;
-                    zone = null;
-                    zone = await databaseManager.GetYoungestMissingPersonAsync();
-                    break;
-                }
+                Debug.Log("CALCOLO ZONA");
+                currentState = ProgramState.WaitResponse;
+                zone = null;
+                zone = await databaseManager.GetYoungestMissingPersonAsync();
+                break;
+            }
 
             case ProgramState.WaitResponse:{
-                    if (zone != null) currentState = ProgramState.StartCalculation;
-                    break;
-                }
+                if (zone != null) currentState = ProgramState.StartCalculation;
+                break;
+            }
 
             case ProgramState.StartCalculation:{
-                    nextMove = null;
-                    path = null;
-                    CalculatePath();
-                    break;
-                }
+                nextMove = null;
+                path = null;
+                CalculatePath();
+                break;
+            }
 
             case ProgramState.Calculating:{
-                    nextMove = null;
-                    if (path != null) currentState = ProgramState.DistanceCalculation;
-                    break;
-                }
+                nextMove = null;
+                if (path != null) currentState = ProgramState.DistanceCalculation;
+                break;
+            }
 
             case ProgramState.DistanceCalculation:{
-                    currentState = ProgramState.Wait;
-                    DistanceCalculation(path);
-                    break;
-                }
+                currentState = ProgramState.Wait;
+                DistanceCalculation(path);
+                break;
+            }
 
             case ProgramState.DetectObstacle:{
-                    currentState = DetectObstacle() ? ProgramState.FindZone : ProgramState.FoundNextMove;
-                    break;
-                }
+                currentState = DetectObstacle() ? ProgramState.FindZone : ProgramState.FoundNextMove;
+                break;
+            }
 
             case ProgramState.FoundNextMove:{
-                    currentState = ProgramState.CalculationgNextMove;
-                    if (nextMove == "NON ADIACENTI"){
-                        currentState = ProgramState.FindZone;
-                    }
-                    NextMovement(path);
-                    Debug.Log(nextMove);
-                    break;
+                currentState = ProgramState.CalculationgNextMove;
+                if (nextMove == "NON ADIACENTI"){
+                    currentState = ProgramState.FindZone;
                 }
+                NextMovement(path);
+                Debug.Log(nextMove);
+                break;
+            }
 
             case ProgramState.CalculationgNextMove:{
-                    if (nextMove != null) currentState = ProgramState.Move;
-                    break;
-                }
+                if (nextMove != null) currentState = ProgramState.Move;
+                break;
+            }
 
             case ProgramState.Move:{
-                    Move();
-                    break;
-                }
+                Move();
+                break;
+            }
 
             case ProgramState.Explore:{
-                    navigationMode = "Exploration";
-                    Explore();
-                    break;
-                }
+                navigationMode = "Exploration";
+                Explore();
+                break;
+            }
 
             default:
                 break;
@@ -316,6 +320,7 @@ public class RobotMovement : MonoBehaviour
         distanceLeft = distanceSensorLeft.distance();
         distanceForward = distanceSensorForward.distance();
         distanceRight = distanceSensorRight.distance();
+        distanceBackward = distanceSensorBackward.distance();
 
         obstacleCellLeft = robotOrientation switch{
             0 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Nord
@@ -341,6 +346,14 @@ public class RobotMovement : MonoBehaviour
             _ => robotPosition // Orientamento non valido
         };
 
+        obstacleCellBackward = robotOrientation switch{
+            0 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Nord
+            90 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Est
+            180 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Sud
+            270 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Ovest
+            _ => robotPosition // Orientamento non valido
+        };
+
         if (activeSensor == "left"){
             distance = distanceLeft;
             obstacleCell = obstacleCellLeft;
@@ -350,6 +363,9 @@ public class RobotMovement : MonoBehaviour
         }else if (activeSensor == "right"){
             distance = distanceRight;
             obstacleCell = obstacleCellRight;
+        }else if(activeSensor == "backward"){
+            distance = distanceBackward;
+            obstacleCell = obstacleCellBackward;
         }
 
         if (navigationMode == "Exploration"){
@@ -384,11 +400,16 @@ public class RobotMovement : MonoBehaviour
             _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
         }
 
+        if (distanceBackward < obstacleDistance){
+            autoIncrementObstacle++;
+            grid[obstacleCellRight.x, obstacleCellRight.y] = 1;
+            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
+        }
+
         if (distance < obstacleDistance){
-            Debug.Log($"Ostacolo, distanza {distance}");
+            Debug.Log($"OSTACOLO IN {obstacleCell.x}, {obstacleCell.y}, distanza {distance}");
             distance = Mathf.Infinity;
 
-            Debug.Log($"OSTACOLO IN {obstacleCell.x}, {obstacleCell.y}");
             autoIncrementObstacle++;
             grid[obstacleCell.x, obstacleCell.y] = 1;
 
@@ -461,6 +482,12 @@ public class RobotMovement : MonoBehaviour
             case ExplorationState.Calculating:{
                     nextMove = null;
                     if (explorationPath != null) currentExplorationState = ExplorationState.DistanceCalculation;
+                    Vector2Int target = FindTarget(zone);
+                    if (grid[target.x, target.y] == 1){
+                        Debug.Log("CAMBIO MODALITA'");
+                        navigationMode = "Navigation";
+                        currentState = ProgramState.FindZone;
+                    }
                     break;
                 }
 
@@ -503,7 +530,11 @@ public class RobotMovement : MonoBehaviour
     public void CalculateExplorationPath(){
         currentIndex = 1;
         currentExplorationState = ExplorationState.Calculating;
-        explorationPath = aStarExplore.EsploraZona(RealToGrid(transform.position), grid, zone);
+        Vector2Int point = RealToGrid(transform.position);
+        Vector2Int start = FindCell(zone);
+        Vector2Int target = FindTarget(zone);
+        grid = aStarExplore.Check(grid, point.x, point.y, start.x,start.y,target.x,target.y);
+        explorationPath = aStarExplore.EsploraZona(RealToGrid(transform.position), FindTarget(zone), grid, zone);
     }
 
     public void ExplorationMove(){
@@ -538,7 +569,7 @@ public class RobotMovement : MonoBehaviour
                 currentExplorationState = ExplorationState.DistanceCalculation;
             }
         }
-        Debug.Log($"Mi sposto in ({explorationPath[currentIndex].x}, {explorationPath[currentIndex].y}), {explorationPath[currentIndex].gCost}");
+        // Debug.Log($"Mi sposto in ({explorationPath[currentIndex].x}, {explorationPath[currentIndex].y}), {explorationPath[currentIndex].gCost}");
         Vector2Int robotCell = RealToGrid(transform.position);
         grid[robotCell.x, robotCell.y] = 2;
     }
@@ -600,6 +631,13 @@ public class RobotMovement : MonoBehaviour
         int zoneY = zoneIndex / 5;
 
         return new Vector2Int(zoneX * 14, zoneY * 14);
+    }
+
+    private Vector2Int FindTarget(string zone){
+        Vector2Int target = FindCell(zone);
+        target.x += 13;
+        target.y += 13;
+        return target;
     }
 
     private async void LoadZone(){

@@ -11,6 +11,7 @@ TagManager:
   - Car
   - Marmitta
   - Clacson
+  - Person
   layers:
   - Default
   - TransparentFX
