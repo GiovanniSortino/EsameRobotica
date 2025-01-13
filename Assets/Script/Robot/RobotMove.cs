@@ -52,6 +52,7 @@ public class RobotMovement : MonoBehaviour
     private bool car = false;
     private bool lowBattery = false;
     private bool detectPerson = false;
+    private int rotation = 0;
     // private bool first = true;
     // private float targetRotation;
 
@@ -123,26 +124,45 @@ public class RobotMovement : MonoBehaviour
                 Vector3 cellCenter = new Vector3(x * cellSize - offsetX, 0, z * cellSize - offsetZ);
 
                 switch (grid[x, z]){
-                    case 0: // Cella libera
+                    case 0:
                         Gizmos.color = Color.green;
                         break;
-                    case 1: // Ostacolo
+                    case 1:
                         Gizmos.color = Color.red;
                         break;
-                    case 2: // Già visitata
+                    case 2:
                         Gizmos.color = Color.blue;
                         break;
-                    default: // Valore sconosciuto
+                    default:
                         Gizmos.color = Color.gray;
                         break;
                 }
 
-                Gizmos.DrawCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize)); // Disegna il cubo pieno
+                Gizmos.DrawCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize));
                 Gizmos.color = Color.black;
-                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize)); // Disegna il bordo
+                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize));
+            }
+        }
+
+        Gizmos.color = Color.yellow;
+        int zoneSize = 14;
+        float lineThickness = 0.1f;
+
+        for (int x = 0; x < grid.GetLength(0); x += zoneSize){
+            for (int z = 0; z < grid.GetLength(1); z += zoneSize){
+                Vector3 bottomLeft = new Vector3(x * cellSize - offsetX - cellSize / 2, 0, z * cellSize - offsetZ - cellSize / 2);
+                Vector3 bottomRight = new Vector3((x + zoneSize) * cellSize - offsetX - cellSize / 2, 0, z * cellSize - offsetZ - cellSize / 2);
+                Vector3 topLeft = new Vector3(x * cellSize - offsetX - cellSize / 2, 0, (z + zoneSize) * cellSize - offsetZ - cellSize / 2);
+                Vector3 topRight = new Vector3((x + zoneSize) * cellSize - offsetX - cellSize / 2, 0, (z + zoneSize) * cellSize - offsetZ - cellSize / 2);
+
+                Gizmos.DrawCube((bottomLeft + bottomRight) / 2, new Vector3(Vector3.Distance(bottomLeft, bottomRight), lineThickness, lineThickness)); // Bordi inferiori
+                Gizmos.DrawCube((topLeft + topRight) / 2, new Vector3(Vector3.Distance(topLeft, topRight), lineThickness, lineThickness)); // Bordi superiori
+                Gizmos.DrawCube((bottomLeft + topLeft) / 2, new Vector3(lineThickness, lineThickness, Vector3.Distance(bottomLeft, topLeft))); // Bordi sinistra
+                Gizmos.DrawCube((bottomRight + topRight) / 2, new Vector3(lineThickness, lineThickness, Vector3.Distance(bottomRight, topRight))); // Bordi destra
             }
         }
     }
+
 
 
     async void Update(){
@@ -181,14 +201,24 @@ public class RobotMovement : MonoBehaviour
             }
 
             case ProgramState.Calculating:{
+                if (explorationPath != null){
+                    if(rotation >= 5) Debug.Log("L'HO GESTITO");
+                    rotation = 0;
+                    currentExplorationState = ExplorationState.DistanceCalculation;
+                }
                 nextMove = null;
                 if (path != null) currentState = ProgramState.DistanceCalculation;
                 break;
             }
 
             case ProgramState.DistanceCalculation:{
-                currentState = ProgramState.Wait;
-                DistanceCalculation(path);
+                if(rotation >= 2){
+                    if(currentState != ProgramState.Calculating) currentState = ProgramState.StartCalculation;
+                    Debug.Log("GESTIONE GUASTO ROTAZIONI CONTINUE");
+                }else{
+                    currentState = ProgramState.Wait;
+                    DistanceCalculation(path);
+                }
                 break;
             }
 
@@ -483,14 +513,17 @@ public class RobotMovement : MonoBehaviour
         // }
         
         if (nextMove == "left"){
+            rotation++;
             insertObstacle = false;
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
             currentState = ProgramState.DistanceCalculation;
         }else if (nextMove == "right"){
+            rotation++;
             insertObstacle = false;
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
             currentState = ProgramState.DistanceCalculation;
         }else if (nextMove == "forward"){
+            rotation = 0;
             insertObstacle = true;
             transform.position += transform.forward * speed * Time.deltaTime;
             if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
@@ -504,6 +537,7 @@ public class RobotMovement : MonoBehaviour
                 }
             }
         }else if (nextMove == "backward"){
+            rotation = 0;
             insertObstacle = true;
             transform.position -= transform.forward * speed * Time.deltaTime;
             Debug.Log($"robot position: {RealToGrid(transform.position)}; {transform.position}; {RealToGrid(nextPosition)}; {nextPosition}; distanza {Vector3.Distance(transform.position, nextPosition)}");
@@ -518,58 +552,70 @@ public class RobotMovement : MonoBehaviour
                 }
             }
         }
+        Vector2Int robotCell = RealToGrid(transform.position);
+        grid[robotCell.x, robotCell.y] = 2;
     }
 
     public void Explore(){
         switch (currentExplorationState){
             case ExplorationState.StartCalculation:{
-                    explorationPath = null;
-                    nextMove = null;
-                    CalculateExplorationPath();
-                    break;
-                }
+                explorationPath = null;
+                nextMove = null;
+                CalculateExplorationPath();
+                break;
+            }
 
             case ExplorationState.Calculating:{
-                    nextMove = null;
-                    if (explorationPath != null) currentExplorationState = ExplorationState.DistanceCalculation;
-                    Vector2Int target = FindTarget(zone);
-                    if (grid[target.x, target.y] == 1){
-                        Debug.Log("CAMBIO MODALITA'");
-                        currentState = ProgramState.UpdatePersonState;
-                    }
-                    break;
+                nextMove = null;
+                if (explorationPath != null){
+                    if(rotation >= 5) Debug.Log("L'HO GESTITO");
+                    rotation = 0;
+                    currentExplorationState = ExplorationState.DistanceCalculation;
                 }
+                Vector2Int target = FindTarget(zone);
+                if (grid[target.x, target.y] == 1){
+                    Debug.Log("CAMBIO MODALITA'");
+                    currentState = ProgramState.UpdatePersonState;
+                }
+                break;
+            }
 
             case ExplorationState.DistanceCalculation:{
+                if(rotation >= 2){
+                    if(currentExplorationState != ExplorationState.Calculating) currentExplorationState = ExplorationState.StartCalculation;
+                    Debug.Log("GESTIONE GUASTO ROTAZIONI CONTINUE");
+                    break;
+                }else{
                     currentExplorationState = ExplorationState.Wait;
                     DistanceCalculation(explorationPath);
                     break;
                 }
+            }
 
             case ExplorationState.DetectObstacle:{
-                    currentExplorationState = DetectObstacle() ? ExplorationState.StartCalculation : ExplorationState.FoundNextMove;
-                    break;
-                }
+                currentExplorationState = DetectObstacle() ? ExplorationState.StartCalculation : ExplorationState.FoundNextMove;
+                break;
+            }
 
             case ExplorationState.FoundNextMove:{
-                    currentExplorationState = ExplorationState.CalculationgNextMove;
-                    if (nextMove == "NON ADIACENTI"){
-                        currentExplorationState = ExplorationState.Calculating;
-                    }
-                    NextMovement(explorationPath);
-                    Debug.Log(nextMove);
-                    break;
+                currentExplorationState = ExplorationState.CalculationgNextMove;
+                if (nextMove == "NON ADIACENTI"){
+                    currentExplorationState = ExplorationState.Calculating;
                 }
+                NextMovement(explorationPath);
+                Debug.Log(nextMove);
+                break;
+            }
 
             case ExplorationState.CalculationgNextMove:{
-                    if (nextMove != null) currentExplorationState = ExplorationState.Move;
+                if (nextMove != null) currentExplorationState = ExplorationState.Move;
                     break;
-                }
+            }
 
             case ExplorationState.Move:{
-                    ExplorationMove();
-                    break;
-                }
+                ExplorationMove();
+                break;
+            }
 
             default:
                 break;
@@ -592,14 +638,17 @@ public class RobotMovement : MonoBehaviour
         float z_rotation = transform.eulerAngles.z;
 
         if (nextMove == "left"){
+            rotation++;
             insertObstacle = false;
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }else if (nextMove == "right"){
+            rotation++;
             insertObstacle = false;
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }else if (nextMove == "forward"){
+            rotation = 0;
             insertObstacle = true;
             transform.position += transform.forward * speed * Time.deltaTime;
             if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
@@ -613,6 +662,7 @@ public class RobotMovement : MonoBehaviour
                 }
             }
         }else if (nextMove == "backward"){
+            rotation = 0;
             insertObstacle = true;
             transform.position -= transform.forward * speed * Time.deltaTime;
             Debug.Log($"robot position: {RealToGrid(transform.position)}; {transform.position}; {RealToGrid(nextPosition)}; {nextPosition}; distanza {Vector3.Distance(transform.position, nextPosition)}");

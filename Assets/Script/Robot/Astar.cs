@@ -27,7 +27,7 @@ public class AStar{
     private bool PosizioneValida(Vector2Int pos, int[,] grid){
         rows = grid.GetLength(0);
         cols = grid.GetLength(1);
-        bool result = pos.x >= 0 && pos.x < rows && pos.y >= 0 && pos.y < cols && grid[pos.x, pos.y] == 0;
+        bool result = pos.x >= 0 && pos.x < rows && pos.y >= 0 && pos.y < cols && grid[pos.x, pos.y] != 1;
         return result;
     }
 
