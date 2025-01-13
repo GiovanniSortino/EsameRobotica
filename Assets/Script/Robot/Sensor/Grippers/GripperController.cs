@@ -59,7 +59,7 @@ public class GripperController : MonoBehaviour
         {
             case GripperState.Idle:
                 flagTrigger = true;
-                if (targetDistance < 0.25f) currentState = GripperState.Grabbing;
+                if (targetDistance < 0.25f && oggettoPreso) currentState = GripperState.Grabbing;
                 break;
 
             case GripperState.Grabbing:
@@ -84,7 +84,7 @@ public class GripperController : MonoBehaviour
 
             case GripperState.RotatingBackward:
                 rotationActive = true;
-                flagTrigger = true;
+                //flagTrigger = true;
                 break;
         }
 
@@ -167,17 +167,21 @@ public class GripperController : MonoBehaviour
         {
             oggettoPreso = other.transform;
             object_detected = true;
+
+            string info = $"[OnTriggerEnter]\n" +
+                          $"- Collider: {other}\n";
+            Debug.Log(info, other.gameObject);
         }
     }
 
     //IN CASO DI ERRORE IN USCITA RIVEDERE QUESTO
-    private void OnTriggerExit(Collider other)
+    /*private void OnTriggerExit(Collider other)
     {
         if (!isGrabbing && oggettoPreso != null && other.transform == oggettoPreso)
         {
             object_detected = false;
         }
-    }
+    }*/
 
     void Ruota(float angle)
     {

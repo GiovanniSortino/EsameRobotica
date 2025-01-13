@@ -311,7 +311,6 @@ public class DatabaseManager{
         
 
         var result = await ExecuteQueryAsync(query, false);
-        Debug.Log($"RESULT {result}");
 
         if (result.Count > 0 && result[0].ContainsKey("zona")){
             // string id = result[0]["id"].ToString();
@@ -331,31 +330,29 @@ public class DatabaseManager{
     }
 
 
-    public async Task UpdatePersonStatusAsync(string id, string nuovoStato){
-
-        if (string.IsNullOrEmpty(id)){
-            //Debug.LogError("ID non valido. Aggiornamento stato fallito.");
-            return;
-        }
+    public async Task<bool> UpdateNotFoundPersonAsync(string id_zona, string nuovoStato){
 
         try{
             string query = @$"
-                MATCH (p:Persona {{id: '{id}'}})
-                SET p.stato = '{nuovoStato}'
-                RETURN p.nome AS nome, p.stato AS stato";
+                MATCH (p:Disperso {{zona: '{id_zona}', stato_rilevamento: 'Disperso'}})
+                SET p.stato_rilevamento = '{nuovoStato}'
+                RETURN p.nome AS nome, p.stato_rilevamento AS stato";
 
             var result = await ExecuteQueryAsync(query, true);
 
             if (result.Count > 0 && result[0].ContainsKey("nome") && result[0].ContainsKey("stato")){
                 string nome = result[0]["nome"].ToString();
                 string statoAggiornato = result[0]["stato"].ToString();
+                return true;
                 //Debug.Log($"Stato aggiornato con successo per {nome}. Nuovo stato: {statoAggiornato}");
             }else{
+                return false;
                 //Debug.LogError("Aggiornamento stato fallito. Nessun risultato trovato.");
             }
         }catch (Exception ex){
             Debug.LogError($"Errore durante l'aggiornamento dello stato: {ex.Message}");
         }
+        return false;
     }
 
     public async Task ComunicaConPersonaleAsync(string personaleId, string messaggio){

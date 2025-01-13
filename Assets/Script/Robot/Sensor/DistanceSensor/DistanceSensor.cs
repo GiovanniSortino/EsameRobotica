@@ -4,49 +4,83 @@ using UnityEngine;
 public class DistanceSensor : MonoBehaviour
 {
     [Header("Configurazione Sensore")]
-    public float maxDistance = 10f; // Distanza massima di rilevamento
-    public float fieldOfViewAngle = 30f; // Angolo totale del cono visivo
-    public LayerMask detectionLayer; // Layer da rilevare (es. "Obstacles")
-    public bool isSensorActive = true; // Stato attivo/disattivo del sensore
-    public float currentDistance = Mathf.Infinity; // Variabile pubblica per la distanza
-    public static RaycastHit hit;
+    public float maxDistance = 10f;       // Distanza massima di rilevamento
+    public float fieldOfViewAngle = 30f;  // Angolo totale del cono visivo (usato per i Gizmos)
+    public LayerMask detectionLayer;      // Layer da rilevare (es. "Obstacles")
+    public bool isSensorActive = true;    // Stato attivo/disattivo del sensore
+    public float currentDistance = Mathf.Infinity;  // Distanza rilevata (la più piccola fra i 3 raggi)
+
+    // Se vuoi mantenere un singolo RaycastHit static, puoi tenerlo;
+    // Ma per chiarezza, useremo RaycastHit locali nei 3 raggi
+    public static RaycastHit hitLeft;
+    public static RaycastHit hitCenter;
+    public static RaycastHit hitRight;
 
     void Update()
     {
-        // Attiva il sensore solo se lo stato è attivo
         if (isSensorActive)
         {
-            DetectObjects();
-        }else{
-            currentDistance = Mathf.Infinity;
-        }
-    }
-
-    // Metodo per rilevare oggetti con un Raycast
-    void DetectObjects()
-    {
-
-        // Crea un LayerMask che esclude il layer "Robot"
-        int layerMask = ~LayerMask.GetMask("Robot"); // "~" inverte il mask per escludere il layer
-
-        // Lancia il Raycast ignorando il layer "Robot"
-        if (Physics.Raycast(transform.position + transform.forward * 0.01f, transform.forward, out hit, maxDistance, layerMask))
-        {
-            Debug.DrawRay(transform.position, transform.forward * hit.distance, Color.red);
-            // Debug.Log("Ostacolo: " + hit.collider.name + " rilevato a distanza: " + hit.distance + " metri");
-            currentDistance = hit.distance;
+            DetectObjects3Rays();
         }
         else
         {
-            Debug.DrawRay(transform.position, transform.forward * maxDistance, Color.green);
             currentDistance = Mathf.Infinity;
-            // Debug.Log("Nessun Ostacolo rilevato");
         }
     }
 
+    void DetectObjects3Rays()
+    {
+        int layerMask = ~LayerMask.GetMask("Robot");
+
+        Vector3 centerDir = transform.forward;
+
+        Quaternion leftRot = Quaternion.Euler(0, -20f, 0);
+        Vector3 leftDir = leftRot * centerDir;
+
+        Quaternion rightRot = Quaternion.Euler(0, 20f, 0);
+        Vector3 rightDir = rightRot * centerDir;
+
+        float distCenter = Mathf.Infinity;
+        float distLeft = Mathf.Infinity;
+        float distRight = Mathf.Infinity;
+
+        // Raggio centrale
+        if (Physics.Raycast(transform.position + transform.forward * 0.01f, centerDir, out hitCenter, maxDistance, layerMask))
+        {
+            distCenter = hitCenter.distance;
+            Debug.DrawRay(transform.position, centerDir * distCenter, Color.red);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position + transform.forward * 0.01f, centerDir * maxDistance, Color.blue);
+        }
+
+        // Raggio sinistra
+        if (Physics.Raycast(transform.position, leftDir, out hitLeft, maxDistance, layerMask))
+        {
+            distLeft = hitLeft.distance;
+            Debug.DrawRay(transform.position + transform.forward * 0.01f, leftDir * distLeft, Color.red);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, leftDir * maxDistance, Color.blue);
+        }
+
+        // Raggio destra
+        if (Physics.Raycast(transform.position, rightDir, out hitRight, maxDistance, layerMask))
+        {
+            distRight = hitRight.distance;
+            Debug.DrawRay(transform.position, rightDir * distRight, Color.red);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, rightDir * maxDistance, Color.blue);
+        }
+
+    }
 
     // Metodo per visualizzare il campo visivo con un cono di Gizmos
-    void OnDrawGizmos()
+    /*void OnDrawGizmos()
     {
         if (isSensorActive)
         {
@@ -75,5 +109,6 @@ public class DistanceSensor : MonoBehaviour
             // Disegna una linea dal punto di partenza alla fine del cono
             Gizmos.DrawLine(position, position + rayDirection);
         }
-    }
+    }*/
 }
+

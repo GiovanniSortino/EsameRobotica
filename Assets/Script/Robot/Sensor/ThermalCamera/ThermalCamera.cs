@@ -95,9 +95,22 @@ public class ThermalCamera : MonoBehaviour
 
             if (detectedPercentage > 2.0f) // Se supera la soglia
             {
-                person = DistanceSensor.hit; // Ottieni il RaycastHit
+                //person = DistanceSensor.hit; // Ottieni il RaycastHit
 
-                if (person.collider != null) // Controlla se c'è un collider
+                if (DistanceSensor.hitCenter.collider != null && DistanceSensor.hitCenter.collider.CompareTag("Person"))
+                {
+                    person = DistanceSensor.hitCenter;
+                }
+                else if (DistanceSensor.hitCenter.collider != null && DistanceSensor.hitLeft.collider.CompareTag("Person"))
+                {
+                    person = DistanceSensor.hitLeft;
+                }
+                else
+                {
+                    person = DistanceSensor.hitRight;
+                }
+
+                if (person.collider != null && person.collider.CompareTag("Person")) // Controlla se c'  un collider
                 {
                     // Verifica se l'oggetto colpito ha il componente "Person"
                     var personComponent = person.collider.GetComponent<PersonComponent>();

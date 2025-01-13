@@ -20,10 +20,6 @@ public class AStarExploration{
         return path;
     }
 
-    private float CalcolaDistanza(Cell a, Cell b){
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
-    }
-
     private bool PosizioneValida(Cell pos, int[,] grid, string zone){
         rows = grid.GetLength(0);
         cols = grid.GetLength(1);
@@ -55,6 +51,9 @@ public class AStarExploration{
                     continue;
 
                 float tentativeGCost = currentNode.gCost + 1;
+                if(grid[neighbor.x, neighbor.y] == 2){
+                    tentativeGCost -= 10;
+                }
 
                 bool isPresent = false;
                 foreach(Cell oldCell in openList){
@@ -140,8 +139,8 @@ public class AStarExploration{
 
         int[,] new_grid = (int[,])grid.Clone();
 
-        for (int x = 0; x <= max_x; x++){
-            for (int y = 0; y <= max_y; y++){
+        for (int x = min_x; x <= max_x; x++){
+            for (int y = min_y; y <= max_y; y++){
                 if (!visited[x,y]){
                     new_grid[x, y] = 1;
                 }
