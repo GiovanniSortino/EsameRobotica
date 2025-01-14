@@ -27,6 +27,7 @@ public class AStarExploration{
     }
 
     public List<Cell> EsploraZona(Vector2Int start, Vector2Int goal, int[,] grid, string zone){
+        Debug.Log("Calcolo exploration path");
         List<Cell> openList = new List<Cell>();
         HashSet<Cell> closedList = new HashSet<Cell>();
 

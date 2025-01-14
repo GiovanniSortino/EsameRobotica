@@ -218,7 +218,7 @@ public class DatabaseManager{
             string[] columns = lines[i].Split(',');
 
             if (columns.Length < 6){
-                //Debug.LogWarning($"Riga {i + 1} ha un formato non valido e sarà ignorata.");
+                Debug.LogWarning($"Riga {i + 1} ha un formato non valido e sarà ignorata.");
                 continue;
             }
 
@@ -230,16 +230,10 @@ public class DatabaseManager{
                 int eta = int.Parse(columns[4].Trim());
                 string stato = columns[5].Trim();
                 await CreateMissingPersonNodeAsync(id, $"{nome} {cognome}", eta, "", "Disperso", zona);
-                // await ExecuteQueryAsync(
-                //     $"CREATE (:Persona {{id: '{id}', nome: '{nome}', cognome: '{cognome}', zona: '{zona}', eta: '{eta}', stato: '{stato}'}})"
-                // );
-                //Debug.Log($"Dati caricati per {nome} {cognome}!");
             }catch (Exception ex){
                 Debug.LogError($"Errore alla riga {i + 1}: {ex.Message}");
             }
         }
-
-        //Debug.Log("Caricamento completato!");
     }
 
 
@@ -267,16 +261,21 @@ public class DatabaseManager{
         return null;
     }
 
-    
+    public async Task<Vector2Int?> GetBasePosition(){
+        string query = @"
+            MATCH (b: Base), (c:Cella)
+            WHERE b.cella = c.id
+            RETURN c.posizione_x AS x, c.posizione_y as y
+            LIMIT 1";
 
-    public async Task<string> GetYoungestMissingPersonAsync(){
-        
-        // string query = @"
-        //     MATCH (p:Disperso {stato_rilevamento: 'Disperso'})
-        //     RETURN p.id AS id, p.nome AS nome, p.eta AS eta, p.zona AS zona
-        //     ORDER BY p.eta ASC
-        //     LIMIT 1";
-        
+        var result = await ExecuteQueryAsync(query, false);
+        if (result.Count > 0 && result[0].ContainsKey("x")){
+            return new Vector2Int(int.Parse(result[0]["x"].ToString()), int.Parse(result[0]["y"].ToString()));
+        }
+        return null;
+    }        
+
+    public async Task<string> GetYoungestMissingPersonAsync(){        
         int batteryLevel = await GetBatteryLevelAsync();
         Debug.Log($"batteryLevel {batteryLevel}");
         string robotZone = await GetRobotZoneAsync();
@@ -308,23 +307,13 @@ public class DatabaseManager{
                     result AS zona
                 LIMIT 1";
 
-        
-
         var result = await ExecuteQueryAsync(query, false);
 
         if (result.Count > 0 && result[0].ContainsKey("zona")){
-            // string id = result[0]["id"].ToString();
-            // string nome = result[0]["nome"].ToString();
-            // int eta = Convert.ToInt32(result[0]["eta"]);
             string zona = result[0]["zona"].ToString();
-
-            // Debug.Log($"Persona trovata: {nome}, Età: {eta}, Zona: {zona}, ID: {id}");
             Debug.Log($"RESULT {zona}");
-
             return zona;
         }
-        
-
         //Debug.Log("Nessuna persona dispersa trovata.");
         return null;
     }
@@ -370,7 +359,7 @@ public class DatabaseManager{
         //Debug.Log("Database svuotato con successo!");
     }
  
-    public async Task CreateRobotNodeAsync(String id, String nome, String cella, int livello_minimo_batteria, int livello_massimo_batteria, int livello_batteria = 100){
+    public async Task CreateRobotNodeAsync(String id, String nome, String cella, int livello_minimo_batteria, int livello_massimo_batteria, int livello_batteria){
         string query = $@"CREATE (r:Robot {{id: '{id}',nome: '{nome}',livello_batteria: {livello_batteria},livello_minimo_batteria: {livello_minimo_batteria},livello_massimo_batteria: {livello_massimo_batteria},cella: '{cella}'}})"; 
         await ExecuteQueryAsync(query);
         //Debug.Log($"Nodo Robot creato: id={id}, nome={nome}, cella={cella}, livello_minimo_batteria:{livello_minimo_batteria}, livello_massimo_batteria:{livello_massimo_batteria}");
