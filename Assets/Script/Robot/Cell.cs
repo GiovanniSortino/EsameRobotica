@@ -18,4 +18,22 @@ public class Cell{
         x = cell.x;
         y = cell.y;
     }
+    public override string ToString(){
+        return $"Cell({x}, {y})";
+    }
+    
+    public override bool Equals(object obj){
+        if (obj == null || GetType() != obj.GetType()) return false;
+        Cell other = (Cell)obj;
+        return x == other.x && y == other.y;
+    }
+
+    public override int GetHashCode(){
+        unchecked{
+            int hash = 17;
+            hash = hash * 23 + x.GetHashCode();
+            hash = hash * 23 + y.GetHashCode();
+            return hash;
+        }
+    }
 }

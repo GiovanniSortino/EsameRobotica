@@ -24,7 +24,7 @@ public class RobotMovement : MonoBehaviour{
     private List<Cell> chargingPath;
     private int currentIndex;
     private AStar aStar;
-    private AStarExploration aStarExplore;
+    private DStarLite aStarExplore;
     private int[,] grid;
     private DatabaseManager databaseManager;
     private int autoIncrementCell = 0, autoIncrementObstacle = 0;
@@ -256,9 +256,15 @@ public class RobotMovement : MonoBehaviour{
                 if (explorationPath != null){
                     rotation = 0;
                     currentExplorationState = ExplorationState.DistanceCalculation;
+                    
+                    string pathString = "";
+                    foreach (Cell cell in explorationPath){
+                        pathString += cell.ToString() + "\n"; // Aggiunge ogni cella su una nuova riga
+                    }
+                    Debug.Log(pathString);
                 }
                 Vector2Int target = FindTarget(zone);
-                if (grid[target.x, target.y] == 1){
+                if (grid[target.x, target.y] == 1 || (explorationPath != null && explorationPath.Count <= 1)){
                     Debug.Log("CAMBIO MODALITA'");
                     currentNavigationState = NavigationState.UpdatePersonState;
                 }
@@ -384,7 +390,7 @@ public class RobotMovement : MonoBehaviour{
         transform.position = GridToReal(new Cell(32, 25));
         GenerateGridFromPlane();
         aStar = new AStar();
-        aStarExplore = new AStarExploration();
+        aStarExplore = new DStarLite();
         nextPosition = transform.position;
 
         System.Random random = new System.Random();
@@ -419,14 +425,30 @@ public class RobotMovement : MonoBehaviour{
             path = aStar.TrovaPercorso(GetRobotPosition(), (Vector2Int)target, grid);
         }
     }
+
     private void CalculateExplorationPath(){
-        currentIndex = 1;
-        currentExplorationState = ExplorationState.Calculating;
-        Vector2Int robotPosition = GetRobotPosition();
+        List<Cell> pathTronc = new();
         Vector2Int start = FindCell(zone);
         Vector2Int target = FindTarget(zone);
-        grid = aStarExplore.Check(grid, robotPosition.x,robotPosition.y, start.x,start.y,target.x,target.y);
-        explorationPath = aStarExplore.EsploraZona(robotPosition, target, grid, zone);
+
+        if (explorationPath != null){
+            Debug.Log($"Lunghezza ExplorationPath {explorationPath.Count}");
+            Debug.Log($"Lunghezza currentIndex {currentIndex}");
+            pathTronc = explorationPath.GetRange(currentIndex + 1, explorationPath.Count - currentIndex - 2);
+            Debug.Log($"Lunghezza pathTronc {explorationPath.Count - 1}");
+
+        }else{
+            pathTronc.Add(new Cell(target));
+        }
+
+        currentIndex = 1;
+        explorationPath = null;
+        currentExplorationState = ExplorationState.Calculating;
+        Vector2Int robotPosition = GetRobotPosition();
+
+        grid = aStarExplore.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, target.x, target.y);
+        pathTronc.Reverse();
+        explorationPath = aStarExplore.UpdatePath(pathTronc, new Cell(RealToGrid(transform.position)), new Cell(target), grid, zone);
     }
 
     private void CalculateChargingnPath(){
