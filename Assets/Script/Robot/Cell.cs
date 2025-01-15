@@ -18,10 +18,15 @@ public class Cell{
         x = cell.x;
         y = cell.y;
     }
+
+    public Cell(Cell cell){
+        x = cell.x;
+        y = cell.y;
+    }
     public override string ToString(){
         return $"Cell({x}, {y})";
     }
-    
+
     public override bool Equals(object obj){
         if (obj == null || GetType() != obj.GetType()) return false;
         Cell other = (Cell)obj;

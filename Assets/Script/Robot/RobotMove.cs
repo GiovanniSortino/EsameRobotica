@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,8 +25,11 @@ public class RobotMovement : MonoBehaviour{
     private float cellSize = 1.0f;
     private List<Cell> path;
     private List<Cell> explorationPath;
+    private List<Cell> recoveryPath;
+    private List<Cell> explorationPathCopy;
     private List<Cell> chargingPath;
     private int currentIndex;
+    private int currentIndexCopy;
     private AStar aStar;
     private DStarLite dStarExploration;
     private int[,] grid;
@@ -43,6 +49,7 @@ public class RobotMovement : MonoBehaviour{
     private bool insertObstacle = false;
     private NavigationState currentNavigationState = NavigationState.Initialization;
     private ExplorationState currentExplorationState = ExplorationState.StartCalculation;
+    private RecoveryState currentRecoveryState = RecoveryState.StartCalculation;
     private ChargingState currentChargingState = ChargingState.StartCalculation;
     private bool car = false;
     private bool detectPerson = false;
@@ -53,7 +60,8 @@ public class RobotMovement : MonoBehaviour{
 
     private enum OperatingMode{
         Navigation, 
-        Exploration, 
+        Exploration,
+        Recovery,
         Charging
     }
 
@@ -77,6 +85,18 @@ public class RobotMovement : MonoBehaviour{
 
     public enum ExplorationState{
         StartCalculation,
+        Calculating,
+        DistanceCalculation,
+        Wait,
+        DetectObstacle,
+        FoundNextMove,
+        CalculationgNextMove,
+        Move,
+        Recovery
+    }
+
+    public enum RecoveryState{
+        StartCalculation, 
         Calculating,
         DistanceCalculation,
         Wait,
@@ -207,6 +227,7 @@ public class RobotMovement : MonoBehaviour{
 
             case NavigationState.Explore:{
                 operatingMode = OperatingMode.Exploration;
+                Debug.Log("Cambio modalità in exploration mode");
                 ExplorationControll();
                 break;
             }
@@ -225,6 +246,7 @@ public class RobotMovement : MonoBehaviour{
 
             case NavigationState.Charging:{
                 operatingMode = OperatingMode.Charging;
+                Debug.Log("Cambio modalità in charging mode");
                 ChargingControll();
                 break;
             }
@@ -237,6 +259,8 @@ public class RobotMovement : MonoBehaviour{
     private void ExplorationControll(){
         switch (currentExplorationState){
             case ExplorationState.StartCalculation:{
+                if(explorationPath != null) explorationPathCopy = DeepClone(explorationPath);
+                currentIndexCopy = currentIndex;
                 FrameCounter = 0;
                 explorationPath = null;
                 nextMove = null;
@@ -252,9 +276,16 @@ public class RobotMovement : MonoBehaviour{
                     currentExplorationState = ExplorationState.DistanceCalculation;
                 }
                 Vector2Int target = FindTarget(zone);
-                if (grid[target.x, target.y] == 1 || (explorationPath != null && explorationPath.Count <= 1)){
+                if (grid[target.x, target.y] == 1){
                     Debug.Log("CAMBIO MODALITA'");
                     currentNavigationState = NavigationState.UpdatePersonState;
+                }else if (explorationPath != null && explorationPath.Count <= 1){
+                    Debug.Log("CAMBIO MODALITA'");
+                    currentNavigationState = NavigationState.UpdatePersonState;
+                    // operatingMode = OperatingMode.Recovery;
+                    // Debug.Log("Cambio modalità in recovery mode");
+                    // currentExplorationState = ExplorationState.Recovery;
+                    // currentRecoveryState = RecoveryState.StartCalculation;
                 }
                 break;
             }
@@ -278,7 +309,7 @@ public class RobotMovement : MonoBehaviour{
             case ExplorationState.FoundNextMove:{
                 currentExplorationState = ExplorationState.CalculationgNextMove;
                 if (nextMove == "NON ADIACENTI"){
-                    currentExplorationState = ExplorationState.Calculating;
+                    currentExplorationState = ExplorationState.StartCalculation;
                     break;
                 }
                 NextMovement(explorationPath);
@@ -292,6 +323,68 @@ public class RobotMovement : MonoBehaviour{
 
             case ExplorationState.Move:{
                 ExplorationMove();
+                break;
+            }
+
+            case ExplorationState.Recovery:{
+                RecoveryControll();
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    private void RecoveryControll(){
+        switch(currentRecoveryState){
+            case RecoveryState.StartCalculation:{
+                Debug.Log("Sono qui, sto calcolando");
+                FrameCounter = 0;
+                recoveryPath = null;
+                nextMove = null;
+                CalculateRecoveryPath();
+                break;
+            }
+
+            case RecoveryState.Calculating:{
+                if(recoveryPath != null) currentRecoveryState = RecoveryState.DistanceCalculation;
+                break;
+            }
+
+            case RecoveryState.DistanceCalculation:{
+                currentRecoveryState = RecoveryState.Wait;
+                if(rotation >= 4){
+                    transform.rotation = Quaternion.Euler(transform.rotation.x, RobotOrientation(), transform.rotation.z);
+                    Debug.Log($"Rotazione aggiornata a {RobotOrientation()} gradi.");
+                    Debug.Log("GESTIONE GUASTO ROTAZIONI CONTINUE");
+                }
+                DistanceCalculation(recoveryPath);
+                break;
+            }
+
+            case RecoveryState.DetectObstacle:{
+                currentRecoveryState = DetectObstacle() ? RecoveryState.StartCalculation : RecoveryState.FoundNextMove;
+                break;
+            }
+
+            case RecoveryState.FoundNextMove:{
+                currentRecoveryState = RecoveryState.CalculationgNextMove;
+                if (nextMove == "NON ADIACENTI"){
+                    currentRecoveryState = RecoveryState.StartCalculation;
+                    break;
+                }
+                NextMovement(recoveryPath);
+                break;
+            }
+
+            case RecoveryState.CalculationgNextMove:{
+                if (nextMove != null) currentRecoveryState = RecoveryState.Move;
+                    break;
+            }
+
+            case RecoveryState.Move:{
+                RecoveryMove();
                 break;
             }
 
@@ -334,11 +427,10 @@ public class RobotMovement : MonoBehaviour{
             case ChargingState.FoundNextMove:{
                 currentChargingState = ChargingState.CalculationgNextMove;
                 if (nextMove == "NON ADIACENTI"){
-                    currentChargingState = ChargingState.Calculating;
+                    currentChargingState = ChargingState.StartCalculation;
                     break;
                 }
                 NextMovement(chargingPath);
-                // Debug.Log(nextMove);
                 break;
             }
 
@@ -435,6 +527,13 @@ public class RobotMovement : MonoBehaviour{
         explorationPath = dStarExploration.UpdatePath(pathTronc, new Cell(RealToGrid(transform.position)), new Cell(target), grid, zone);
     }
 
+    private void CalculateRecoveryPath(){
+        currentIndex = 1;
+        currentRecoveryState = RecoveryState.Calculating;
+        Cell lastValidCell = explorationPathCopy[currentIndexCopy];
+        recoveryPath = aStar.TrovaPercorso(GetRobotPosition(), new Vector2Int(lastValidCell.x, lastValidCell.y), grid);
+    }
+
     private void CalculateChargingnPath(){
         currentIndex = 1;
         currentChargingState = ChargingState.Calculating;
@@ -485,6 +584,19 @@ public class RobotMovement : MonoBehaviour{
                 270 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Ovest
                 _ => null
             };
+        }else{
+            transform.position = GridToReal(new Cell(GetRobotPosition()));
+            if (operatingMode == OperatingMode.Exploration){
+                currentExplorationState = ExplorationState.StartCalculation;
+            }else if(operatingMode == OperatingMode.Navigation){
+                currentNavigationState = NavigationState.FindZone;
+            }else if(operatingMode == OperatingMode.Charging){
+                currentChargingState = ChargingState.StartCalculation;
+            }else if(operatingMode == OperatingMode.Recovery){
+                currentRecoveryState = RecoveryState.StartCalculation;
+                Debug.Log("Ricalcolo");
+            }
+            return;
         }
 
         if (operatingMode == OperatingMode.Exploration){
@@ -493,7 +605,10 @@ public class RobotMovement : MonoBehaviour{
             currentNavigationState = NavigationState.DetectObstacle;
         }else if(operatingMode == OperatingMode.Charging){
             currentChargingState = ChargingState.DetectObstacle;
+        }else if(operatingMode == OperatingMode.Recovery){
+            currentRecoveryState = RecoveryState.DetectObstacle;
         }
+
     }
 
     private bool DetectObstacle(){
@@ -503,6 +618,8 @@ public class RobotMovement : MonoBehaviour{
             currentNavigationState = NavigationState.Wait;
         }else if(operatingMode == OperatingMode.Charging){
             currentChargingState = ChargingState.Wait;
+        }else if(operatingMode == OperatingMode.Recovery){
+            currentRecoveryState = RecoveryState.Wait;
         }
 
         if(insertObstacle && distance < obstacleDistance && obstacleCell != null){
@@ -527,12 +644,17 @@ public class RobotMovement : MonoBehaviour{
 
         _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
         nextMove = OrientationToDirection(selectedPath);
-        if (nextMove == "NON ADIACENTI" && operatingMode == OperatingMode.Navigation){
-            currentNavigationState = NavigationState.FindZone;
-        }else if (nextMove == "NON ADIACENTI" && operatingMode == OperatingMode.Exploration){
-            currentExplorationState = ExplorationState.StartCalculation;
-        }else if (nextMove == "NON ADIACENTI" && operatingMode == OperatingMode.Charging){
-            currentChargingState = ChargingState.StartCalculation;
+        if(nextMove == "NON ADIACENTI"){
+            transform.position = GridToReal(new Cell(GetRobotPosition()));
+            if (operatingMode == OperatingMode.Navigation){
+                currentNavigationState = NavigationState.FindZone;
+            }else if (operatingMode == OperatingMode.Exploration){
+                currentExplorationState = ExplorationState.StartCalculation;
+            }else if (operatingMode == OperatingMode.Charging){
+                currentChargingState = ChargingState.StartCalculation;
+            }else if (operatingMode == OperatingMode.Recovery){
+                currentRecoveryState = RecoveryState.StartCalculation;
+            }
         }
         actionText.text = "Azione: " + nextMove;
 
@@ -632,7 +754,55 @@ public class RobotMovement : MonoBehaviour{
             transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }
-        // Debug.Log($"Mi sposto in ({explorationPath[currentIndex].x}, {explorationPath[currentIndex].y}), {explorationPath[currentIndex].gCost}");
+    }
+
+    private void RecoveryMove(){
+        if(FrameCounter >= 100){
+            transform.position = GridToReal(new Cell(GetRobotPosition()));
+            Debug.Log("OOOOOOOOOPS MI SONO PERSO");
+            currentRecoveryState = RecoveryState.StartCalculation;
+            return;
+        }
+
+        float x_rotation = transform.eulerAngles.x;
+        float y_rotation = transform.eulerAngles.y;
+        float z_rotation = transform.eulerAngles.z;
+
+        if (nextMove == "left"){
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
+            currentRecoveryState = RecoveryState.DistanceCalculation;
+        }else if (nextMove == "right"){
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
+            currentRecoveryState = RecoveryState.DistanceCalculation;
+        }else if (nextMove == "forward"){
+            FrameCounter++;
+            rotation = 0;
+            insertObstacle = true;
+            transform.position += transform.forward * speed * Time.deltaTime;
+            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+                FrameCounter = 0;
+                transform.position = nextPosition;
+                Vector2Int robotCell = GetRobotPosition();
+                grid[robotCell.x, robotCell.y] = 2;
+                if (currentIndex < recoveryPath.Count - 1){
+                    currentRecoveryState = RecoveryState.DistanceCalculation;
+                    currentIndex++;
+                }else{
+                    Debug.Log("HO CAMBIATO MODALITA IN EXPLORATION");
+                    currentExplorationState = ExplorationState.StartCalculation;
+                }
+            }
+        }else if (nextMove == "backward"){
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            currentRecoveryState = RecoveryState.DistanceCalculation;
+        }
     }
 
     private void ChargingMove(){
@@ -992,6 +1162,14 @@ public class RobotMovement : MonoBehaviour{
                 Gizmos.DrawCube((bottomRight + topRight) / 2, new Vector3(lineThickness, lineThickness, Vector3.Distance(bottomRight, topRight))); // Bordi destra
             }
         }
+    }
+
+    private List<Cell> DeepClone(List<Cell> list){
+        List<Cell> copy = new();
+        foreach (Cell cell in list){
+            copy.Add(new Cell(cell));
+        }
+        return copy;
     }
 
 }
