@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -24,7 +25,7 @@ public class RobotMovement : MonoBehaviour{
     private List<Cell> chargingPath;
     private int currentIndex;
     private AStar aStar;
-    private DStarLite aStarExplore;
+    private DStarLite dStarExploration;
     private int[,] grid;
     private DatabaseManager databaseManager;
     private int autoIncrementCell = 0, autoIncrementObstacle = 0;
@@ -36,15 +37,7 @@ public class RobotMovement : MonoBehaviour{
     private string nextMove = null;
     private string zone;
     private float distance = Mathf.Infinity;
-    private float distanceLeft = Mathf.Infinity;
-    private float distanceForward = Mathf.Infinity;
-    private float distanceRight = Mathf.Infinity;
-    private float distanceBackward = Mathf.Infinity;
-    private Vector2Int obstacleCell = new Vector2Int(0, 0);
-    private Vector2Int obstacleCellLeft = new Vector2Int(0, 0);
-    private Vector2Int obstacleCellForward = new Vector2Int(0, 0);
-    private Vector2Int obstacleCellRight = new Vector2Int(0, 0);
-    private Vector2Int obstacleCellBackward = new Vector2Int(0, 0);
+    private Vector2Int? obstacleCell = null;
     private OperatingMode operatingMode = OperatingMode.Navigation;
     private bool isUpdated = false;
     private bool insertObstacle = false;
@@ -255,13 +248,8 @@ public class RobotMovement : MonoBehaviour{
                 nextMove = null;
                 if (explorationPath != null){
                     rotation = 0;
+                    grid[GetRobotPosition().x, GetRobotPosition().y] = 2;
                     currentExplorationState = ExplorationState.DistanceCalculation;
-                    
-                    string pathString = "";
-                    foreach (Cell cell in explorationPath){
-                        pathString += cell.ToString() + "\n"; // Aggiunge ogni cella su una nuova riga
-                    }
-                    Debug.Log(pathString);
                 }
                 Vector2Int target = FindTarget(zone);
                 if (grid[target.x, target.y] == 1 || (explorationPath != null && explorationPath.Count <= 1)){
@@ -294,7 +282,6 @@ public class RobotMovement : MonoBehaviour{
                     break;
                 }
                 NextMovement(explorationPath);
-                // Debug.Log(nextMove);
                 break;
             }
 
@@ -380,17 +367,13 @@ public class RobotMovement : MonoBehaviour{
 
     private async void initialization(){
         currentNavigationState = NavigationState.Wait;
-
-        // particleFilter.InitializeLandmarks();
-        // particleFilter.InitializeParticles();
-
         Debug.Log("CREO BASE DI CONOSCENZA");
         offsetX = plane.localScale.x * 10f / 2f;
         offsetZ = plane.localScale.z * 10f / 2f;
         transform.position = GridToReal(new Cell(32, 25));
         GenerateGridFromPlane();
         aStar = new AStar();
-        aStarExplore = new DStarLite();
+        dStarExploration = new DStarLite();
         nextPosition = transform.position;
 
         System.Random random = new System.Random();
@@ -446,9 +429,10 @@ public class RobotMovement : MonoBehaviour{
         currentExplorationState = ExplorationState.Calculating;
         Vector2Int robotPosition = GetRobotPosition();
 
-        grid = aStarExplore.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, target.x, target.y);
+        grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, target.x, target.y);
+        gridCorrection(robotPosition, start, target);
         pathTronc.Reverse();
-        explorationPath = aStarExplore.UpdatePath(pathTronc, new Cell(RealToGrid(transform.position)), new Cell(target), grid, zone);
+        explorationPath = dStarExploration.UpdatePath(pathTronc, new Cell(RealToGrid(transform.position)), new Cell(target), grid, zone);
     }
 
     private void CalculateChargingnPath(){
@@ -465,55 +449,42 @@ public class RobotMovement : MonoBehaviour{
 
         Debug.Log($"Active Sensor: {activeSensor}");
 
-        distanceLeft = distanceSensorLeft.distance();
-        distanceForward = distanceSensorForward.distance();
-        distanceRight = distanceSensorRight.distance();
-        distanceBackward = distanceSensorBackward.distance();
-
-        obstacleCellLeft = robotOrientation switch{
-            0 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Nord
-            90 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Est
-            180 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Sud
-            270 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Ovest
-            _ => robotPosition // Orientamento non valido
-        };
-
-        obstacleCellForward = robotOrientation switch{
-            0 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Nord
-            90 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Est
-            180 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Sud
-            270 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Ovest
-            _ => robotPosition // Orientamento non valido
-        };
-
-        obstacleCellRight = robotOrientation switch{
-            0 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Nord
-            90 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Est
-            180 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Sud
-            270 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Ovest
-            _ => robotPosition // Orientamento non valido
-        };
-
-        obstacleCellBackward = robotOrientation switch{
-            0 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Nord
-            90 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Est
-            180 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Sud
-            270 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Ovest
-            _ => robotPosition // Orientamento non valido
-        };
-
         if (activeSensor == "left"){
-            distance = distanceLeft;
-            obstacleCell = obstacleCellLeft;
+            distance = distanceSensorLeft.distance();
+            obstacleCell = robotOrientation switch{
+                0 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Nord
+                90 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Est
+                180 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Sud
+                270 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Ovest
+                _ => null
+            };
         }else if (activeSensor == "forward"){
-            distance = distanceForward;
-            obstacleCell = obstacleCellForward;
+            distance = distanceSensorForward.distance();
+            obstacleCell = robotOrientation switch{
+                0 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Nord
+                90 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Est
+                180 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Sud
+                270 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Ovest
+                _ => null
+            };
         }else if (activeSensor == "right"){
-            distance = distanceRight;
-            obstacleCell = obstacleCellRight;
+            distance = distanceSensorRight.distance();
+            obstacleCell = robotOrientation switch{
+                0 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Nord
+                90 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Est
+                180 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Sud
+                270 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Ovest
+                _ => null
+            };
         }else if(activeSensor == "backward"){
-            distance = distanceBackward;
-            obstacleCell = obstacleCellBackward;
+            distance = distanceSensorBackward.distance();
+            obstacleCell = robotOrientation switch{
+                0 => new Vector2Int(robotPosition.x, robotPosition.y - 1), // Nord
+                90 => new Vector2Int(robotPosition.x - 1, robotPosition.y), // Est
+                180 => new Vector2Int(robotPosition.x, robotPosition.y + 1), // Sud
+                270 => new Vector2Int(robotPosition.x + 1, robotPosition.y), // Ovest
+                _ => null
+            };
         }
 
         if (operatingMode == OperatingMode.Exploration){
@@ -534,47 +505,21 @@ public class RobotMovement : MonoBehaviour{
             currentChargingState = ChargingState.Wait;
         }
 
-        if(insertObstacle){
-            if (distanceLeft < obstacleDistance && obstacleCellLeft.x >= 0 && obstacleCellLeft.y >= 0){
+        if(insertObstacle && distance < obstacleDistance && obstacleCell != null){
+            Vector2Int obstacleCellNonNull = (Vector2Int)obstacleCell;
+            if(obstacleCellNonNull.x >= 0 && obstacleCellNonNull.y >= 0){
+                Debug.Log($"OSTACOLO IN {obstacleCellNonNull.x}, {obstacleCellNonNull.y}, distanza {distance}");
+                distance = Mathf.Infinity;
                 autoIncrementObstacle++;
-                grid[obstacleCellLeft.x, obstacleCellLeft.y] = 1;
+                grid[obstacleCellNonNull.x, obstacleCellNonNull.y] = 1;
                 _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-            }
-
-            if (distanceForward < obstacleDistance && obstacleCellForward.x >= 0 && obstacleCellForward.y >= 0){
-                autoIncrementObstacle++;
-                grid[obstacleCellForward.x, obstacleCellForward.y] = 1;
-                _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-            }
-
-            if (distanceRight < obstacleDistance && obstacleCellRight.x >= 0 && obstacleCellRight.y >= 0){
-                autoIncrementObstacle++;
-                grid[obstacleCellRight.x, obstacleCellRight.y] = 1;
-                _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-            }
-
-            if (distanceBackward < obstacleDistance && obstacleCellBackward.x >= 0 && obstacleCellBackward.y >= 0){
-                autoIncrementObstacle++;
-                grid[obstacleCellBackward.x, obstacleCellBackward.y] = 1;
-                _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-            }
-        }
-
-        if (distance < obstacleDistance){
-            Debug.Log($"OSTACOLO IN {obstacleCell.x}, {obstacleCell.y}, distanza {distance}");
-            distance = Mathf.Infinity;
-
-            autoIncrementObstacle++;
-            grid[obstacleCell.x, obstacleCell.y] = 1;
-
-            _ = databaseManager.CreateObstacleNodeAsync($"O{autoIncrementObstacle}", $"C{autoIncrementCell}");
-            return true;
+                return true;
+            }          
         }
         return false;
     }
 
     private void NextMovement(List<Cell> selectedPath){
-        FrameCounter = 0;
         nextCell = selectedPath[currentIndex];
         nextPosition = GridToReal(nextCell);
         Debug.Log($"NodoGriglia corrente: {currentIndex}/{selectedPath.Count}, Posizione corrente {transform.position} -> {GetRobotPosition()}, Target Posizione: {nextPosition} -> {RealToGrid(nextPosition)}");
@@ -595,7 +540,7 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private void NavigationMove(){
-        if(FrameCounter >= 60){
+        if(FrameCounter >= 100){
             transform.position = GridToReal(new Cell(GetRobotPosition()));
             Debug.Log("OOOOOOOOOPS MI SONO PERSO");
             currentNavigationState = NavigationState.StartCalculation;
@@ -619,28 +564,10 @@ public class RobotMovement : MonoBehaviour{
             FrameCounter++;
             rotation = 0;
             insertObstacle = true;
-
             transform.position += transform.forward * speed * Time.deltaTime;
-
-            // Vector3 movement = transform.forward * speed * Time.deltaTime;
-            // particleFilter.Predict(movement.x, movement.z, 0);
-
-            // transform.position += movement;
-
-            // float[] observedDistances = GetObservedDistances();
-            // particleFilter.UpdateWeights(observedDistances);
-
-            // particleFilter.NormalizeWeights();
-
-            // // Step 3: Ricampionamento delle particelle
-            // particleFilter.ResampleParticles();
-
-            // // Step 4: Stima della posizione
-            // Vector2 estimatedPosition = particleFilter.EstimatePosition();
-            // Debug.Log($"Posizione stimata dal filtro: {estimatedPosition} -> {RealToGrid(estimatedPosition)}, transform position: {transform.position} -> {RealToGrid(transform.position)}");
-
-
             if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+                FrameCounter = 0;
                 transform.position = nextPosition;
                 if (currentIndex < path.Count - 1){
                     currentNavigationState = NavigationState.DistanceCalculation;
@@ -651,46 +578,15 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == "backward"){
-            FrameCounter++;
-            rotation = 0;
-            insertObstacle = true;
-
-            transform.position -= transform.forward * speed * Time.deltaTime;
-            // Vector3 movement = transform.forward * speed * Time.deltaTime;
-            // particleFilter.Predict(movement.x, movement.z, 0);
-
-            // transform.position -= movement;
-
-            // float[] observedDistances = GetObservedDistances();
-            // particleFilter.UpdateWeights(observedDistances);
-
-            // particleFilter.NormalizeWeights();
-
-            // // Step 3: Ricampionamento delle particelle
-            // particleFilter.ResampleParticles();
-
-            // // Step 4: Stima della posizione
-            // Vector2 estimatedPosition = particleFilter.EstimatePosition();
-            // Debug.Log($"Posizione stimata dal filtro: {estimatedPosition} -> {RealToGrid(estimatedPosition)}, transform position: {transform.position} -> {RealToGrid(transform.position)}");
-
-            Debug.Log($"robot position: {GetRobotPosition()}; {transform.position}; {RealToGrid(nextPosition)}; {nextPosition}; distanza {Vector3.Distance(transform.position, nextPosition)}");
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                transform.position = nextPosition;
-                if (currentIndex < path.Count - 1){
-                    currentNavigationState = NavigationState.DistanceCalculation;
-                    currentIndex++;
-                }else{
-                    currentIndex = 1;
-                    currentNavigationState = NavigationState.Explore;
-                }
-            }
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            currentNavigationState = NavigationState.DistanceCalculation;
         }
-        Vector2Int robotCell = GetRobotPosition();
-        grid[robotCell.x, robotCell.y] = 2;
     }
 
     private void ExplorationMove(){
-        if(FrameCounter >= 60){
+        if(FrameCounter >= 100){
             transform.position = GridToReal(new Cell(GetRobotPosition()));
             Debug.Log("OOOOOOOOOPS MI SONO PERSO");
             currentExplorationState = ExplorationState.StartCalculation;
@@ -717,7 +613,11 @@ public class RobotMovement : MonoBehaviour{
             insertObstacle = true;
             transform.position += transform.forward * speed * Time.deltaTime;
             if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+                FrameCounter = 0;
                 transform.position = nextPosition;
+                Vector2Int robotCell = GetRobotPosition();
+                grid[robotCell.x, robotCell.y] = 2;
                 if (currentIndex < explorationPath.Count - 1){
                     currentExplorationState = ExplorationState.DistanceCalculation;
                     currentIndex++;
@@ -727,29 +627,16 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == "backward"){
-            FrameCounter++;
-            rotation = 0;
-            insertObstacle = true;
-            transform.position -= transform.forward * speed * Time.deltaTime;
-            Debug.Log($"robot position: {GetRobotPosition()}; {transform.position}; {RealToGrid(nextPosition)}; {nextPosition}; distanza {Vector3.Distance(transform.position, nextPosition)}");
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                transform.position = nextPosition;
-                if (currentIndex < explorationPath.Count - 1){
-                    currentExplorationState = ExplorationState.DistanceCalculation;
-                    currentIndex++;
-                }else{
-                    Debug.Log("HO CAMBIATO MODALITA IN NAVIGATION");
-                    currentNavigationState = NavigationState.UpdatePersonState;
-                }
-            }
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            currentExplorationState = ExplorationState.DistanceCalculation;
         }
         // Debug.Log($"Mi sposto in ({explorationPath[currentIndex].x}, {explorationPath[currentIndex].y}), {explorationPath[currentIndex].gCost}");
-        Vector2Int robotCell = GetRobotPosition();
-        grid[robotCell.x, robotCell.y] = 2;
     }
 
     private void ChargingMove(){
-        if(FrameCounter >= 60){
+        if(FrameCounter >= 100){
             transform.position = GridToReal(new Cell(GetRobotPosition()));
             Debug.Log("OOOOOOOOOPS MI SONO PERSO");
             currentChargingState = ChargingState.StartCalculation;
@@ -776,6 +663,8 @@ public class RobotMovement : MonoBehaviour{
             insertObstacle = true;
             transform.position += transform.forward * speed * Time.deltaTime;
             if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+                FrameCounter = 0;
                 transform.position = nextPosition;
                 if (currentIndex < chargingPath.Count - 1){
                     currentChargingState = ChargingState.DistanceCalculation;
@@ -786,36 +675,23 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == "backward"){
-            FrameCounter++;
-            rotation = 0;
-            insertObstacle = true;
-            transform.position -= transform.forward * speed * Time.deltaTime;
-            Debug.Log($"robot position: {GetRobotPosition()}; {transform.position}; {RealToGrid(nextPosition)}; {nextPosition}; distanza {Vector3.Distance(transform.position, nextPosition)}");
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                transform.position = nextPosition;
-                if (currentIndex < chargingPath.Count - 1){
-                    currentChargingState = ChargingState.DistanceCalculation;
-                    currentIndex++;
-                }else{
-                    currentChargingState = ChargingState.Charging;
-                    Debug.Log("CARICAMENTO IN CORSO");
-                }
-            }
+            rotation++;
+            insertObstacle = false;
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 180, z_rotation);
+            currentChargingState = ChargingState.DistanceCalculation;
         }
-
-        Vector2Int robotCell = GetRobotPosition();
-        grid[robotCell.x, robotCell.y] = 2;
     }
 
     private Vector2Int GetRobotPosition(){
         return RealToGrid(transform.position);;
     }
-    private string RelativeOrientation(Vector2Int primaCella, Vector2Int secondaCella){
-        int deltaX = secondaCella.x - primaCella.x;
-        int deltaY = secondaCella.y - primaCella.y;
+    
+    private string RelativeTargetPosition(Vector2Int robotCell, Vector2Int targetCell){
+        int deltaX = targetCell.x - robotCell.x;
+        int deltaY = targetCell.y - robotCell.y;
 
-        if (deltaX == 0 && deltaY >= 0) return "down";
-        if (deltaX == 0 && deltaY < 0) return "up";
+        if (deltaX == 0 && deltaY >= 0) return "up";
+        if (deltaX == 0 && deltaY < 0) return "down";
         if (deltaX >= 0 && deltaY == 0) return "right";
         if (deltaX < 0 && deltaY == 0) return "left";
 
@@ -827,39 +703,43 @@ public class RobotMovement : MonoBehaviour{
         Debug.Log($"current index {currentIndex}, path.count {selectedPath.Count}");
         Vector2Int targetCell = new Vector2Int(selectedPath[currentIndex].x, selectedPath[currentIndex].y);
 
-        string relativeOrientation = RelativeOrientation(robotCell, targetCell);
+        string relativeTargetPosition = RelativeTargetPosition(robotCell, targetCell);
         int robotOrientation = RobotOrientation();
 
-        Debug.Log($"relative orientation {relativeOrientation}");
+        Debug.Log($"Relative target Position {relativeTargetPosition}");
 
-        switch (relativeOrientation){
-            case "down":
-                if (robotOrientation == 0) return "forward";
-                else if (robotOrientation == 180) return "backward";
-                else if (robotOrientation == 90) return "left";
-                else if (robotOrientation == 270) return "right";
-                break;
-
-            case "up":
+        switch (relativeTargetPosition){
+            case "down":{
                 if (robotOrientation == 180) return "forward";
                 else if (robotOrientation == 0) return "backward";
                 else if (robotOrientation == 90) return "right";
                 else if (robotOrientation == 270) return "left";
                 break;
+            }
 
-            case "left":
+            case "up":{
+                if (robotOrientation == 0) return "forward";
+                else if (robotOrientation == 180) return "backward";
+                else if (robotOrientation == 90) return "left";
+                else if (robotOrientation == 270) return "right";
+                break;
+            }
+
+            case "left":{
                 if (robotOrientation == 90) return "backward";
                 else if (robotOrientation == 270) return "forward";
                 else if (robotOrientation == 0) return "left";
                 else if (robotOrientation == 180) return "right";
                 break;
+            }
 
-            case "right":
+            case "right":{
                 if (robotOrientation == 270) return "backward";
                 else if (robotOrientation == 90) return "forward";
                 else if (robotOrientation == 0) return "right";
                 else if (robotOrientation == 180) return "left";
                 break;
+            }
 
             default:
                 break;
@@ -970,6 +850,101 @@ public class RobotMovement : MonoBehaviour{
         }
     }
 
+    private void gridCorrection(Vector2Int cell, Vector2Int startZone, Vector2Int target){
+        if (IsRobotTrulyBlocked(cell.x, cell.y, startZone.x, startZone.y, target.x, target.y)){
+            ResetZone(cell);
+        }
+    }
+
+    private bool IsRobotTrulyBlocked(int x_start, int y_start, int min_x, int min_y, int max_x, int max_y){
+        int rows = grid.GetLength(0);
+        int cols = grid.GetLength(1);
+
+        bool[,] visited = new bool[rows, cols];
+        Queue<Vector2Int> coda = new Queue<Vector2Int>();
+
+        visited[x_start, y_start] = true;
+        coda.Enqueue(new Vector2Int(x_start, y_start));
+
+        while (coda.Count > 0){
+            Vector2Int current = coda.Dequeue();
+
+            foreach (Vector2Int neighbor in AddNeighbor(current.x, current.y, min_x, min_y, max_x, max_y, visited)){
+                if (grid[neighbor.x, neighbor.y] == 0){
+                    return false;
+                }
+
+                coda.Enqueue(neighbor);
+            }
+        }
+        return CheckExternalZone(min_x, min_y, max_x, max_y, visited);
+    }
+
+    private bool CheckExternalZone(int min_x, int min_y, int max_x, int max_y, bool[,] visited){
+        int rows = grid.GetLength(0);
+        int cols = grid.GetLength(1);
+
+        for (int x = min_x - 1; x <= max_x + 1; x++) {
+            if (x < 0 || x >= rows) continue;
+
+            if (min_y - 1 >= 0 && grid[x, min_y - 1] == 0 && !visited[x, min_y - 1]){
+                return false;
+            }
+            
+            if (max_y + 1 < cols && grid[x, max_y + 1] == 0 && !visited[x, max_y + 1]){
+                return false;
+            }
+        }
+
+        for (int y = min_y - 1; y <= max_y + 1; y++){
+            if (y < 0 || y >= cols) continue;
+
+            if (min_x - 1 >= 0 && grid[min_x - 1, y] == 0 && !visited[min_x - 1, y]){
+                return false;
+            }
+
+            if (max_x + 1 < rows && grid[max_x + 1, y] == 0 && !visited[max_x + 1, y]){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private IEnumerable<Vector2Int> AddNeighbor(int x, int y, int min_x, int min_y, int max_x, int max_y, bool[,] visited){
+        Vector2Int[] directions = {new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, -1), new Vector2Int(0, 1)};
+
+        foreach (var dir in directions){
+            int nx = x + dir.x;
+            int ny = y + dir.y;
+
+            if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y && !visited[nx, ny]){
+                visited[nx, ny] = true;
+                yield return new Vector2Int(nx, ny);
+            }
+        }
+    }
+    
+    private void ResetZone(Vector2Int cell){
+        string zone = FindZone(new Cell(cell));
+        Vector2Int targetZone = FindTarget(zone);
+        int min_x = targetZone.x - 13;
+        int min_y = targetZone.y - 13;
+        int max_x = targetZone.x;
+        int max_y = targetZone.y;
+
+        if (min_x < 0 || min_y < 0 || max_x >= grid.GetLength(0) || max_y >= grid.GetLength(1)){
+            return;
+        }
+
+        for (int x = min_x; x <= max_x; x++){
+            for (int y = min_y; y <= max_y; y++){
+                grid[x, y] = 0;
+            }
+        }
+
+        Debug.Log($"Zona {zone} reinizializzata (da ({min_x}, {min_y}) a ({max_x}, {max_y}))");
+    }
+    
     private void DrawGizmos(){
         if (grid == null){
             return;
@@ -1017,18 +992,6 @@ public class RobotMovement : MonoBehaviour{
                 Gizmos.DrawCube((bottomRight + topRight) / 2, new Vector3(lineThickness, lineThickness, Vector3.Distance(bottomRight, topRight))); // Bordi destra
             }
         }
-    }
-
-    float[] GetObservedDistances(){
-        float[] distances = new float[particleFilter.landmarks.Count];
-
-        for (int i = 0; i < particleFilter.landmarks.Count; i++){
-            Vector2 landmarkPosition = particleFilter.landmarks[i];
-            float distance = Vector2.Distance(new Vector2(transform.position.x, transform.position.z), landmarkPosition);
-            distances[i] = distance; // Distanza osservata
-        }
-
-        return distances;
     }
 
 }

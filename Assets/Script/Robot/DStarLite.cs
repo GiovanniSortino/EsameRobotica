@@ -60,16 +60,16 @@ public class DStarLite
     private float Manhattan(Cell a, Cell b, int[,] grid, List<Cell> pathTronc)
     {
         int inv;
-        // Se la cella non � stata visitata (presumibilmente indicata da -1), inv = 1, altrimenti inv = -1
-        if (grid[a.x, a.y] == 0)//&& !pathTronc.Contains(a)
+        // Se la cella non   stata visitata (presumibilmente indicata da -1), inv = 1, altrimenti inv = -1
+        if (grid[a.x, a.y] == 0)//&& !pathTronc.Contains(a) //Se è già stata visitata dal robot
         {
-            inv = 1;
+            inv = 1; //nel caso di celle già visitate devo allontanarmi dal target
             Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
 
         }
         else
         {
-            inv = -1;
+            inv = -1; //nel caso di celle già visitate devo avvicinarmi al target
             Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
         }
         float eur = Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
@@ -87,26 +87,33 @@ public class DStarLite
         grid_visited = CreaNuovaGriglia(grid);
         if (pathTronc == null || pathTronc.Count == 0)
         {
-            throw new ArgumentException("Il percorso troncato non pu� essere nullo o vuoto.");
+            throw new ArgumentException("Il percorso troncato non pu  essere nullo o vuoto.");
         }
 
         Cell cella = pathTronc[pathTronc.Count - 1];
         //pathTronc.RemoveAt(pathTronc.Count - 1);
 
-        //Utilizzare una open list, come quella di Mc per tenere conto dei vicini
-        //Inoltre, per evitare che prenda percorsi ancora non esplorati per
-        //raggiungere quella zona usa un flag (forse non serve)
-        //while (isChild(grid[cella.x, cella.y]))
-
+        (int min_x, int min_y, int max_x, int max_y) = GetZoneBounds(zone, 14);
 
         while (grid[cella.x, cella.y] == 1)
         {
-            // Se la lista � vuota, esci dal ciclo (o gestisci l'errore)
+            // Se la lista   vuota, esci dal ciclo (o gestisci l'errore)
             if (pathTronc.Count == 0)
             {
-                pathTronc.Add(robotPos);
-                Debug.Log("Non ci sono celle non ostacolo nel percorso troncato.");
-                break; // oppure return null, a seconda della logica
+                if (grid[min_x, max_y] == 0)
+                {
+                    pathTronc.Add(new Cell(min_x, max_y));
+                }
+                else if (grid[max_x, min_y] == 0)
+                {
+                    pathTronc.Add(new Cell(max_x, min_y));
+                }
+                else
+                {
+                    pathTronc.Add(robotPos);
+                    Debug.Log("Non ci sono celle non ostacolo nel percorso troncato.");
+                    break; // oppure return null, a seconda della logica
+                }
             }
 
             cella = pathTronc[pathTronc.Count - 1];
@@ -127,14 +134,14 @@ public class DStarLite
             path.Add(cella);
             grid_visited[cella.x, cella.y] = 0;
 
-            if (Stop(grid, zone))
+            /*if (Stop(grid, zone))
             {
                 List<Cell> r =  new();
                 r.Add(robotPos);
                 return r;
-            }
+            }*/
 
-            if (cella.x == robotPos.x && cella.y == robotPos.y)
+            if (cella.x == robotPos.x && cella.y == robotPos.y) //Far aggiungere a dario, se la cella è quella di target ma non ha completato la lista continua
             {
                 //path.Add(robotPos);
                 Debug.Log("Nodo iniziale");
@@ -142,7 +149,6 @@ public class DStarLite
                 path.Reverse();
                 pathTronc.Reverse();
                 path.AddRange(pathTronc);
-                //pathTronc.AddRange(path);
                 return path;
             }
 
@@ -156,13 +162,41 @@ public class DStarLite
             }
             else
             {
-                Debug.Log("Forse � qui il problema");
+                Debug.Log("Torno alla cella padre");
                 cella = cella.parent;
             }
             //Debug.Log($"cella scelta {cella.ToString()}");
         }
-        Debug.Log("Percorso: Null");
-        return null;
+        Debug.Log("Percorso: Null, Non sono riuscito a trovare un percorso che parte dal target fino al robot");
+        
+        List<Cell> r =  new();
+        r.Add(robotPos);
+        return r;
+        //return null;
+    }
+
+    (int min_x, int min_y, int max_x, int max_y) GetZoneBounds(string zona, int zoneSize)
+    {
+        // Estrai il numero della zona dalla stringa, ad esempio da "Z1", "Z2", ...
+        if (!int.TryParse(zona.Substring(1), out int zoneNumber))
+        {
+            Debug.LogError($"Formato della zona non valido: {zona}");
+            return (0,0, 0,0);
+        }
+
+        // Calcola l'indice di colonna (x) e riga (y) in base al numero della zona
+        int zonesPerRow = 70 / zoneSize; // Numero di zone per riga
+        int colIndex = (zoneNumber - 1) % zonesPerRow; // Colonna (0-4 per zoneSize=14)
+        int rowIndex = (zoneNumber - 1) / zonesPerRow; // Riga (0-4 per zoneSize=14)
+
+        // Calcola i limiti della zona
+        int min_x = colIndex * zoneSize;      // Colonna minima
+        int max_x = min_x + zoneSize;         // Colonna massima (non inclusiva)
+        int min_y = rowIndex * zoneSize;      // Riga minima
+        int max_y = min_y + zoneSize;         // Riga massima (non inclusiva)
+
+        // Ritorna i limiti come tuple
+        return (min_x, min_y, max_x, max_y);
     }
 
     public bool Stop(int[,] grid, string zona)
@@ -174,7 +208,7 @@ public class DStarLite
         int totalRows = grid.GetLength(0);
         int totalCols = grid.GetLength(1);
 
-        // Se la griglia non rispetta le dimensioni attese, si pu� loggare un errore
+        // Se la griglia non rispetta le dimensioni attese, si pu  loggare un errore
         if (totalRows != 70 || totalCols != 70)
         {
             Debug.LogWarning("La griglia non ha le dimensioni 70x70. Verifica le dimensioni.");
@@ -196,7 +230,7 @@ public class DStarLite
         int rowIndex = (zoneNumber - 1) / 5;    // es. per Z1-Z5 -> 0, per Z6-Z10 -> 1, ecc.
 
         int min_x = colIndex * zoneSize;      // colonna minima
-        int max_x = min_x + zoneSize;           // colonna massima (non inclusa nell�iterazione)
+        int max_x = min_x + zoneSize;           // colonna massima (non inclusa nell iterazione)
         int min_y = rowIndex * zoneSize;        // riga minima
         int max_y = min_y + zoneSize;
 
@@ -234,11 +268,11 @@ public class DStarLite
             {
                 if (grid[i, j] != 1)//|| grid_visited[i,j] == 0
                 {
-                    nuovaGriglia[i, j] = -1; // -1 per i nodi in cui il robot pu� camminare
+                    nuovaGriglia[i, j] = -1; // -1 per i nodi in cui il robot pu  camminare
                 }
                 else
                 {
-                    nuovaGriglia[i, j] = 0; // 0 in cui non pu� andare (osatacoli o percorsi gi� programmati)
+                    nuovaGriglia[i, j] = 0; // 0 in cui non pu  andare (osatacoli o percorsi gi  programmati)
                 }
             }
         }

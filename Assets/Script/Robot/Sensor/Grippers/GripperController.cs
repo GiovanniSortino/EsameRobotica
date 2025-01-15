@@ -93,37 +93,37 @@ public class GripperController : MonoBehaviour
             case GripperState.Grabbing:
                 ControllaMovimentoPinza();
                 if (!isGrabbing) currentState = GripperState.RotatingForward;
-                Debug.Log("1");
+                // Debug.Log("1");
                 break;
 
             case GripperState.RotatingForward:
                 Ruota(180f);
-                Debug.Log("2");
+                // Debug.Log("2");
                 if (!rotationActive) currentState = GripperState.MovingForward;
                 IniziaMovimento(1f);
                 break;
 
             case GripperState.MovingForward:
-                Debug.Log("3");
+                // Debug.Log("3");
                 MuoviAvanti(true);
                 if (!isMovingForward) currentState = GripperState.Releasing;
                 break;
 
             case GripperState.Releasing:
                 RilasciaOggetto();
-                Debug.Log("4");
+                // Debug.Log("4");
                 if (!relase) currentState = GripperState.MovingBackward;
                 IniziaMovimento(-1f);
                 break;
 
             case GripperState.MovingBackward:
                 MuoviAvanti(false);
-                Debug.Log("5");
+                // Debug.Log("5");
                 if (!isMovingBack) currentState = GripperState.RotatingBackward;
                 break;
 
             case GripperState.RotatingBackward:
-                Debug.Log("6");
+                // Debug.Log("6");
                 Ruota(180f);
                 if (!rotationActive) currentState = GripperState.Idle;
                 break;
