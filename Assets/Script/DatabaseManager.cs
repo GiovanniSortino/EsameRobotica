@@ -3,6 +3,8 @@ using UnityEngine;
 using Neo4j.Driver;
 using System.Threading.Tasks;
 using System;
+using Unity.VisualScripting;
+using Unity.VisualScripting.AssemblyQualifiedNameParser;
 
 public class DatabaseManager{
     private static IDriver _driver;
@@ -262,23 +264,18 @@ public class DatabaseManager{
         return null;
     }
 
-    public async Task<string> GetBasePositionZone()
-    {
+    public async Task<string> GetBasePositionZone(){
         string query = @"
             MATCH (b:Base), (c:Cella), (z:Zona)
             WHERE b.cella = c.id AND (z)-[:E_FORMATA]->(c)
             RETURN z.id AS zonaId
             ";
 
-
         var result = await ExecuteQueryAsync(query, false);
-        if (result.Count > 0 && result[0].ContainsKey("zona"))
-        {
+        if (result.Count > 0 && result[0].ContainsKey("zona")){
             return result[0]["zona"].ToString();
         }
         return null;
-
-
     }
 
     public async Task<Vector2Int?> GetBasePosition(){
@@ -346,7 +343,7 @@ public class DatabaseManager{
                 if (zona == "C0"){
                 sapiTextToSpeech.Speak($"Sto andando a ricaricarmi in cella {zona}");
                 }else{
-                    sapiTextToSpeech.Speak($"Sto andando in zona {zona} perchè il mio livello di batteria è {batteryLevel}%, in questa zona ho trovato {under12Count} persone con meno di 12 anni e l'età minima è {minEta}");
+                    sapiTextToSpeech.Speak($"Sto andando in zona {zona} perchè il mio livello di batteria è {batteryLevel}%, in questa zona ho trovato {under12Count} {(under12Count == "1" ? "persona" : "persone")} con meno di 12 anni e l'età minima è {minEta}");
                 }
             }
 

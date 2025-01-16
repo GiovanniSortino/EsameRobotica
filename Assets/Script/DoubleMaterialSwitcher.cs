@@ -2,45 +2,46 @@ using UnityEngine;
  
 public class DoubleMaterialSwitcher : MonoBehaviour
 {
-    public Material normalMaterial1;     // Materiale 1 per la telecamera principale
-    public Material normalMaterial2;     // Materiale 2 per la telecamera principale
-    public Material thermalMaterial1;    // Materiale 1 per la telecamera termica
-    public Material thermalMaterial2;    // Materiale 2 per la telecamera termica
+    public Material normalMaterial1;
+    public Material normalMaterial2;
+    public Material thermalMaterial1;
+    public Material thermalMaterial2;
  
     private Renderer objRenderer;
  
-    void OnEnable()
-    {
-        // Iscriviti all'evento di CameraManager
+    void OnEnable(){
         CameraManager.OnThermalCameraToggled += SwitchMaterial;
+        CameraManager.OnRedColorToggled += SwitchRedMaterial;
     }
  
-    void OnDisable()
-    {
-        // Rimuovi l'iscrizione all'evento
+    void OnDisable(){
         CameraManager.OnThermalCameraToggled -= SwitchMaterial;
+        CameraManager.OnRedColorToggled -= SwitchRedMaterial;
     }
  
-    void Start()
-    {
-        // Ottieni il Renderer dell'oggetto
+    void Start(){
         objRenderer = GetComponent<Renderer>();
- 
-        // Imposta i materiali normali all'inizio
-        if (objRenderer != null)
-        {
+         if (objRenderer != null){
             objRenderer.materials = new Material[] { normalMaterial1, normalMaterial2 };
         }
     }
- 
-    void SwitchMaterial(bool isThermalActive)
-    {
-        // Cambia i materiali in base allo stato della telecamera termica
-        if (objRenderer != null)
-        {
+
+    void SwitchMaterial(bool isThermalActive){  
+        if (objRenderer != null){
             objRenderer.materials = isThermalActive
                 ? new Material[] { thermalMaterial1, thermalMaterial2 }
                 : new Material[] { normalMaterial1, normalMaterial2 };
         }
     }
+
+    void SwitchRedMaterial(bool isThermalActive){
+        if (objRenderer != null){
+            if(thermalMaterial2.shader.name != "Standard" && normalMaterial2.shader.name != "Standard"){
+                objRenderer.materials = isThermalActive ? new Material[] { thermalMaterial1, thermalMaterial2 } : new Material[] { normalMaterial1, normalMaterial2 };
+            }else{
+                objRenderer.materials = new Material[] { normalMaterial1, normalMaterial2 };
+            }
+        }
+    }
+
 }

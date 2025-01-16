@@ -85,7 +85,8 @@ GameObject:
   - component: {fileID: 3363814}
   - component: {fileID: 2348802}
   - component: {fileID: 6475044}
-  m_Layer: 0
+  - component: {fileID: 6412962417481412811}
+  m_Layer: 6
   m_Name: junk_bridge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -179,3 +180,17 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: 5861287f42befa844ab82fdf73435b7e, type: 3}
+--- !u!114 &6412962417481412811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 199220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 663e999412331ae4d8eccb255788db35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  normalMaterial: {fileID: 2100000, guid: c8db8a287d547cf42b625c176e63f9a2, type: 2}
+  thermalMaterial: {fileID: 2100000, guid: 507540c3a26e2c240b669d477190c498, type: 2}

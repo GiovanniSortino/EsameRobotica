@@ -1,42 +1,41 @@
 using UnityEngine;
 
-public class MaterialSwitcher : MonoBehaviour
-{
-    public Material normalMaterial;     // Materiale per la telecamera principale
-    public Material thermalMaterial;    // Materiale per la telecamera termica
+public class MaterialSwitcher : MonoBehaviour{
+    public Material normalMaterial;
+    public Material thermalMaterial; 
 
     private Renderer objRenderer;
 
-    void OnEnable()
-    {
-        // Iscriviti all'evento di CameraManager
+    void OnEnable(){
         CameraManager.OnThermalCameraToggled += SwitchMaterial;
+        CameraManager.OnRedColorToggled += SwitchRedMaterial;
     }
 
-    void OnDisable()
-    {
-        // Rimuovi l'iscrizione all'evento
+    void OnDisable(){
         CameraManager.OnThermalCameraToggled -= SwitchMaterial;
+        CameraManager.OnRedColorToggled += SwitchRedMaterial;
     }
 
-    void Start()
-    {
-        // Ottieni il Renderer dell'oggetto
+    void Start(){
         objRenderer = GetComponent<Renderer>();
-
-        // Imposta il materiale normale all'inizio
-        if (objRenderer != null)
-        {
+        if (objRenderer != null){
             objRenderer.material = normalMaterial;
         }
     }
 
-    void SwitchMaterial(bool isThermalActive)
-    {
-        // Cambia il materiale in base allo stato della telecamera termica
-        if (objRenderer != null)
-        {
+    void SwitchMaterial(bool isThermalActive){  
+        if (objRenderer != null){
             objRenderer.material = isThermalActive ? thermalMaterial : normalMaterial;
+        }
+    }
+
+    void SwitchRedMaterial(bool isOnlyRedActive){
+        if (objRenderer != null){
+            if(thermalMaterial.shader.name != "Standard"){
+                objRenderer.material = isOnlyRedActive ? thermalMaterial : normalMaterial;
+            }else{
+                objRenderer.material = normalMaterial;
+            }
         }
     }
 }
