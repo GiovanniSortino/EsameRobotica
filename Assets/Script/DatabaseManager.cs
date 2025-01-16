@@ -7,12 +7,13 @@ using System;
 public class DatabaseManager{
     private static IDriver _driver;
     private static DatabaseManager databaseManager;
-
+    private static SapiTextToSpeech sapiTextToSpeech;
     private DatabaseManager(){}
 
     public static DatabaseManager GetDatabaseManager(){
         if (databaseManager == null){
             databaseManager = new();
+            sapiTextToSpeech = new();
             CreateConnetion();
         }
         return databaseManager;
@@ -261,6 +262,25 @@ public class DatabaseManager{
         return null;
     }
 
+    public async Task<string> GetBasePositionZone()
+    {
+        string query = @"
+            MATCH (b:Base), (c:Cella), (z:Zona)
+            WHERE b.cella = c.id AND (z)-[:E_FORMATA]->(c)
+            RETURN z.id AS zonaId
+            ";
+
+
+        var result = await ExecuteQueryAsync(query, false);
+        if (result.Count > 0 && result[0].ContainsKey("zona"))
+        {
+            return result[0]["zona"].ToString();
+        }
+        return null;
+
+
+    }
+
     public async Task<Vector2Int?> GetBasePosition(){
         string query = @"
             MATCH (b: Base), (c:Cella)
@@ -275,47 +295,65 @@ public class DatabaseManager{
         return null;
     }        
 
-    public async Task<string> GetYoungestMissingPersonAsync(){        
+    public async Task<string> GetYoungestMissingPersonAsync(bool isEnabled){        
         int batteryLevel = await GetBatteryLevelAsync();
         Debug.Log($"batteryLevel {batteryLevel}");
         string robotZone = await GetRobotZoneAsync();
         Debug.Log($"robotZone {robotZone}");
         string baseCell = await GetBaseCell();
         Debug.Log($"baseCell {baseCell}");
+        string baseZone = await GetBasePositionZone();
+        Debug.Log($"baseZone {baseZone}");
+        
 
         string query = @$"
                 MATCH (p:Disperso {{stato_rilevamento: 'Disperso'}})
                 WITH p.zona AS zona, 
-                    COUNT(CASE WHEN p.eta <= 12 THEN 1 ELSE 0 END) AS under12Count
+                    COUNT(CASE WHEN p.eta <= 12 THEN 1 ELSE 0 END) AS under12Count,
+                    MIN(toInteger(p.eta)) AS minEta
                 WITH 
                     zona,
                     under12Count,
+                    minEta,
                     CASE
                         WHEN {batteryLevel} < 20 THEN '{baseCell}'
-                        WHEN {batteryLevel} < 50 AND zona = '{robotZone}' THEN zona
+                        WHEN {batteryLevel} < 50 AND zona = '{baseZone}' THEN zona
                         ELSE zona
                     END AS result,
                     CASE
                         WHEN {batteryLevel} < 20 THEN 0
-                        WHEN {batteryLevel} < 50 AND zona = '{robotZone}' THEN 1
+                        WHEN {batteryLevel} < 50 AND zona = '{baseZone}' THEN 1
                         ELSE 2
                     END AS priority
                 ORDER BY 
                     priority ASC,
-                    under12Count DESC
+                    under12Count DESC,
+                    minEta ASC
                 RETURN 
-                    result AS zona
+                    result AS zona,
+                    under12Count AS Count,
+                    minEta AS eta
                 LIMIT 1";
+
 
         var result = await ExecuteQueryAsync(query, false);
 
         if (result.Count > 0 && result[0].ContainsKey("zona")){
             string zona = result[0]["zona"].ToString();
-            Debug.Log($"RESULT {zona}");
+            string under12Count = result[0]["Count"].ToString();
+            string minEta = result[0]["eta"].ToString();
+            if(isEnabled){
+                if (zona == "C0"){
+                sapiTextToSpeech.Speak($"Sto andando a ricaricarmi in cella {zona}");
+                }else{
+                    sapiTextToSpeech.Speak($"Sto andando in zona {zona} perchè il mio livello di batteria è {batteryLevel}%, in questa zona ho trovato {under12Count} persone con meno di 12 anni e l'età minima è {minEta}");
+                }
+            }
+
             return zona;
         }
-        //Debug.Log("Nessuna persona dispersa trovata.");
-        return null;
+        sapiTextToSpeech.Speak($"Ho terminato la ricerca. Torno alla base di ricarica.");
+        return "End";
     }
 
 

@@ -7,6 +7,8 @@ public class Battery : MonoBehaviour{
     public int percentage = 100;
     public bool isActive = false;
     public bool isCharging = false;
+    private bool isFirstCharging = true;
+    private bool isFirstDischarging = true;
     private float timer = 0f;
 
     void Start(){
@@ -22,9 +24,10 @@ public class Battery : MonoBehaviour{
         if(isActive){
             timer += Time.deltaTime;
             if(isCharging && timer >= 0.5f){
+                isFirstDischarging = false;
                 if (percentage >= 100){
                     timer = 0f;
-                    Debug.Log("Batteria carica");
+                    if(isFirstCharging) Debug.Log("Batteria carica");
                 }else{
                     percentage += 1;
                     timer = 0f;
@@ -33,9 +36,10 @@ public class Battery : MonoBehaviour{
                     _ = databaseManager.SetBatteryLevelAsync((int)percentage);
                 }
             }else if(!isCharging && timer >= 10f){
+                isFirstCharging = false;
                 if (percentage <= 0){
                     timer = 0f;
-                    Debug.Log("Batteria scarica");
+                    if(isFirstDischarging) Debug.Log("Batteria scarica");
                 }else{
                     percentage -= 1;
                     timer = 0f;

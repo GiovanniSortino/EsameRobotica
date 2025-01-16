@@ -64,13 +64,13 @@ public class DStarLite
         if (grid[a.x, a.y] == 0)//&& !pathTronc.Contains(a) //Se è già stata visitata dal robot
         {
             inv = 1; //nel caso di celle già visitate devo allontanarmi dal target
-            Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
+            // Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
 
         }
         else
         {
             inv = -1; //nel caso di celle già visitate devo avvicinarmi al target
-            Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
+            // Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
         }
         float eur = Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
         float eur_inv = eur * inv;
@@ -111,7 +111,7 @@ public class DStarLite
                 else
                 {
                     pathTronc.Add(robotPos);
-                    Debug.Log("Non ci sono celle non ostacolo nel percorso troncato.");
+                    //Debug.Log("Non ci sono celle non ostacolo nel percorso troncato.");
                     break; // oppure return null, a seconda della logica
                 }
             }
@@ -122,14 +122,14 @@ public class DStarLite
 
         List<Cell> path = new List<Cell>();
         grid_visited[robotPos.x, robotPos.y] = -1;
-        string pathString = "Percorso: ";
+        // string pathString = "Percorso: ";
 
-        Debug.Log($"cella di partenza {cella.ToString()}");
-        Debug.Log($"cella robot {robotPos.ToString()}");
+        //Debug.Log($"cella di partenza {cella.ToString()}");
+        //Debug.Log($"cella robot {robotPos.ToString()}");
 
         while (cella != null)
         {
-            Debug.Log($"cella scelta {cella.ToString()}");
+            //Debug.Log($"cella scelta {cella.ToString()}");
 
             path.Add(cella);
             grid_visited[cella.x, cella.y] = 0;
@@ -144,8 +144,8 @@ public class DStarLite
             if (cella.x == robotPos.x && cella.y == robotPos.y) //Far aggiungere a dario, se la cella è quella di target ma non ha completato la lista continua
             {
                 //path.Add(robotPos);
-                Debug.Log("Nodo iniziale");
-                Debug.Log(cella.ToString());
+                //Debug.Log("Nodo iniziale");
+                //Debug.Log(cella.ToString());
                 path.Reverse();
                 pathTronc.Reverse();
                 path.AddRange(pathTronc);
@@ -162,12 +162,12 @@ public class DStarLite
             }
             else
             {
-                Debug.Log("Torno alla cella padre");
+                //Debug.Log("Torno alla cella padre");
                 cella = cella.parent;
             }
             //Debug.Log($"cella scelta {cella.ToString()}");
         }
-        Debug.Log("Percorso: Null, Non sono riuscito a trovare un percorso che parte dal target fino al robot");
+        //Debug.Log("Percorso: Null, Non sono riuscito a trovare un percorso che parte dal target fino al robot");
         
         List<Cell> r =  new();
         r.Add(robotPos);
@@ -180,7 +180,7 @@ public class DStarLite
         // Estrai il numero della zona dalla stringa, ad esempio da "Z1", "Z2", ...
         if (!int.TryParse(zona.Substring(1), out int zoneNumber))
         {
-            Debug.LogError($"Formato della zona non valido: {zona}");
+            //Debug.LogError($"Formato della zona non valido: {zona}");
             return (0,0, 0,0);
         }
 
@@ -211,7 +211,7 @@ public class DStarLite
         // Se la griglia non rispetta le dimensioni attese, si pu  loggare un errore
         if (totalRows != 70 || totalCols != 70)
         {
-            Debug.LogWarning("La griglia non ha le dimensioni 70x70. Verifica le dimensioni.");
+            //Debug.LogWarning("La griglia non ha le dimensioni 70x70. Verifica le dimensioni.");
         }
 
         int CountStop = 0;
@@ -220,7 +220,7 @@ public class DStarLite
         int zoneNumber;
         if (!int.TryParse(zona.Substring(1), out zoneNumber))
         {
-            Debug.LogError("Formato della zona non valido: " + zona);
+            //Debug.LogError("Formato della zona non valido: " + zona);
             return false;
         }
 
@@ -247,10 +247,10 @@ public class DStarLite
 
         if (CountStop >= 196)
         {
-            Debug.Log($"1 Ho visitato {CountStop} celle");
+            //Debug.Log($"1 Ho visitato {CountStop} celle");
             return true;
         }
-        Debug.Log($"2 Ho visitato {CountStop} celle");
+        //Debug.Log($"2 Ho visitato {CountStop} celle");
 
         return false;
     }
@@ -276,7 +276,7 @@ public class DStarLite
                 }
             }
         }
-        Debug.Log("AGGIORNAMENTO GRID_VISITED");
+        //Debug.Log("AGGIORNAMENTO GRID_VISITED");
         return nuovaGriglia;
     }
     private Cell max_euristic_neighbor(List<Cell> neighbors, Cell robotPos, List<Cell> pathTronc, int[,] grid)
@@ -330,7 +330,7 @@ public class DStarLite
                 grid_visited[neighbor.x, neighbor.y] == -1) // && !pathTronc.Contains(neighbor)
             {
                 neighbors.Add(neighbor);
-                Debug.Log($"Vicino: {neighbor.ToString()}");
+                //Debug.Log($"Vicino: {neighbor.ToString()}");
             }
         }
         return neighbors;

@@ -59,7 +59,15 @@ public class GripperController : MonoBehaviour
         {
             case GripperState.Idle:
                 flagTrigger = true;
-                if (targetDistance < 0.25f && oggettoPreso) currentState = GripperState.Grabbing;
+                if (targetDistance < 0.25f && oggettoPreso) { 
+                    currentState = GripperState.Grabbing; 
+                }
+                else
+                    {
+                        oggettoPreso = null;
+                    }
+                //Debug.Log(oggettoPreso);
+
                 break;
 
             case GripperState.Grabbing:
@@ -92,26 +100,34 @@ public class GripperController : MonoBehaviour
         {
             case GripperState.Grabbing:
                 ControllaMovimentoPinza();
-                if (!isGrabbing) currentState = GripperState.RotatingForward;
-                // Debug.Log("1");
+                if (!isGrabbing)
+                {
+                    currentState = GripperState.RotatingForward;
+                }
+                //Debug.Log("1");
                 break;
 
             case GripperState.RotatingForward:
                 Ruota(180f);
                 // Debug.Log("2");
+                //Debug.Log(oggettoPreso);
                 if (!rotationActive) currentState = GripperState.MovingForward;
                 IniziaMovimento(1f);
                 break;
 
             case GripperState.MovingForward:
                 // Debug.Log("3");
+                //Debug.Log(oggettoPreso);
+
                 MuoviAvanti(true);
                 if (!isMovingForward) currentState = GripperState.Releasing;
                 break;
 
             case GripperState.Releasing:
                 RilasciaOggetto();
-                // Debug.Log("4");
+                //Debug.Log("4");
+                //Debug.Log(oggettoPreso);
+
                 if (!relase) currentState = GripperState.MovingBackward;
                 IniziaMovimento(-1f);
                 break;
@@ -119,11 +135,15 @@ public class GripperController : MonoBehaviour
             case GripperState.MovingBackward:
                 MuoviAvanti(false);
                 // Debug.Log("5");
+                //Debug.Log(oggettoPreso);
+
                 if (!isMovingBack) currentState = GripperState.RotatingBackward;
                 break;
 
             case GripperState.RotatingBackward:
                 // Debug.Log("6");
+                //Debug.Log(oggettoPreso);
+
                 Ruota(180f);
                 if (!rotationActive) currentState = GripperState.Idle;
                 break;
@@ -144,24 +164,10 @@ public class GripperController : MonoBehaviour
         // Fissa l'oggetto alla pinza
         oggettoPreso.SetParent(transform);
         flagTrigger = false;
-
-        /*Vector3 posSinistro = braccioSinistro.localPosition;
-        Vector3 posDestro = braccioDestro.localPosition;
-
-        // Controlla se targetDistance è oltre i limiti
-        targetDistance = Mathf.Clamp(targetDistance, chiusuraMinima, aperturaMassima);
-
-        // Movimento graduale delle braccia
-        posSinistro.z = Mathf.MoveTowards(posSinistro.z, -targetDistance, velocitaMovimento * Time.deltaTime);
-        posDestro.z = Mathf.MoveTowards(posDestro.z, targetDistance, velocitaMovimento * Time.deltaTime);
-
-        // Imposta le posizioni limitate
-        braccioSinistro.localPosition = posSinistro;
-        braccioDestro.localPosition = posDestro;*/
         isGrabbing = false;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         if (other.CompareTag("Object") && flagTrigger)
         {
@@ -170,7 +176,7 @@ public class GripperController : MonoBehaviour
 
             string info = $"[OnTriggerEnter]\n" +
                           $"- Collider: {other}\n";
-            Debug.Log(info, other.gameObject);
+            //Debug.Log(info, other.gameObject);
         }
     }
 
@@ -245,7 +251,7 @@ public class GripperController : MonoBehaviour
             oggettoPreso = null;
             relase = false;
 
-            Debug.Log("Oggetto rilasciato e lanciato in avanti.");
+            //Debug.Log("Oggetto rilasciato e lanciato in avanti.");
         }
     }
 
