@@ -73,6 +73,7 @@ Material:
     m_Ints: []
     m_Floats:
     - Alpha_Clip_Threshold: 0.736
+    - _AlphaToMask: 1
     m_Colors:
     - _SSSColor: {r: 0.9811321, g: 0.44997406, b: 0.26379493, a: 0}
   m_BuildTextureStacks: []

@@ -1,10 +1,9 @@
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
 
 public class RobotMovement : MonoBehaviour{
@@ -22,7 +21,7 @@ public class RobotMovement : MonoBehaviour{
     public int batterythreshold;
     public Text actionText;
     public ParticleFilter particleFilter;
-    private float cellSize = 1.0f;
+    private float cellSize = 1;
     private List<Cell> path;
     private List<Cell> explorationPath;
     private List<Cell> recoveryPath;
@@ -57,6 +56,10 @@ public class RobotMovement : MonoBehaviour{
     private Vector2Int? chargingBasePosition = null;
     private bool isFirstBattery = true;
     private bool isFirstSpeack = true;
+    private Vector3 estimatedPosition;
+    private Vector3 movement;
+    private float angle;
+
     private enum Direction{
         Up,
         Right,
@@ -163,8 +166,8 @@ public class RobotMovement : MonoBehaviour{
             return;
         }
 
-        battery.isCharging = chargingBasePosition != null && Mathf.Abs(GetRobotPosition().x - ((Vector2Int)chargingBasePosition).x) <= 1 && 
-                                Mathf.Abs(GetRobotPosition().y - ((Vector2Int)chargingBasePosition).y) <= 1;
+        battery.isCharging = chargingBasePosition != null && Mathf.Abs(GetRobotPositionEstimated().x - ((Vector2Int)chargingBasePosition).x) <= 1 && 
+                                Mathf.Abs(GetRobotPositionEstimated().y - ((Vector2Int)chargingBasePosition).y) <= 1;
 
         switch (currentNavigationState){
             case NavigationState.Initialization:{
@@ -245,7 +248,6 @@ public class RobotMovement : MonoBehaviour{
             case NavigationState.CalculationgNextMove:{
                 if (nextMove != Move.Undefined){
                     if(nextMove == Move.NotAdjacent){ //il robot non sa dove andare quindi ricalcola il percorso
-                        transform.position = GridToReal(new Cell(GetRobotPosition()));
                         currentNavigationState = NavigationState.FindZone;
                     }else{
                         currentNavigationState = NavigationState.Move;
@@ -281,7 +283,7 @@ public class RobotMovement : MonoBehaviour{
             }
 
             case NavigationState.End:{
-                //gestire qui la fine se serve altro
+                //fine della FSM
                 break;
             }
 
@@ -289,6 +291,8 @@ public class RobotMovement : MonoBehaviour{
                 break;
         }
     }
+
+    int count = 0;
 
     private void ExplorationControll(){
         switch (currentExplorationState){
@@ -298,6 +302,7 @@ public class RobotMovement : MonoBehaviour{
                     currentIndexCopy = currentIndex;
                 }
                 FrameCounter = 0; //serve per capire quando il robot si perde
+                //NON TOGLIERE IL COMMENTO SOTTO
                 //explorationPath = null; serve per gestire la risposta della base di conoscenza ma per gestire il percorso troncato l'ho inserito in CalculateExplorationPath()
                 CalculateExplorationPath();
                 break;
@@ -309,10 +314,11 @@ public class RobotMovement : MonoBehaviour{
                         currentExplorationState = ExplorationState.Recovery;
                         operatingMode = OperatingMode.Recovery;
                         Debug.Log("CAMBIO MODALITA' DA EXPLORATION MODE A RECOVERY MODE");
+                        count = 0;
                         explorationPath = null;
                         currentRecoveryState = RecoveryState.StartCalculation;
                     }else{
-                        grid[GetRobotPosition().x, GetRobotPosition().y] = 2;
+                        grid[GetRobotPositionEstimated().x, GetRobotPositionEstimated().y] = 2;
                         currentExplorationState = ExplorationState.DistanceCalculation;
                     }
                 }
@@ -345,7 +351,6 @@ public class RobotMovement : MonoBehaviour{
             case ExplorationState.CalculationgNextMove:{
                 if (nextMove != Move.Undefined){
                     if (nextMove == Move.NotAdjacent){
-                        transform.position = GridToReal(new Cell(GetRobotPosition()));
                         currentExplorationState = ExplorationState.StartCalculation;
                     }else{
                         currentExplorationState = ExplorationState.Move;
@@ -410,7 +415,6 @@ public class RobotMovement : MonoBehaviour{
             case RecoveryState.CalculationgNextMove:{
                 if (nextMove != Move.Undefined){
                     if(nextMove == Move.NotAdjacent){
-                        transform.position = GridToReal(new Cell(GetRobotPosition()));
                         currentRecoveryState = RecoveryState.StartCalculation;
                     }else{
                         currentRecoveryState = RecoveryState.Move;
@@ -469,7 +473,6 @@ public class RobotMovement : MonoBehaviour{
             case ChargingState.CalculationgNextMove:{
                 if (nextMove != Move.Undefined){
                     if(nextMove == Move.NotAdjacent){
-                        transform.position = GridToReal(new Cell(GetRobotPosition()));
                         currentChargingState = ChargingState.StartCalculation;
                     }else{
                         currentChargingState = ChargingState.Move;
@@ -516,11 +519,14 @@ public class RobotMovement : MonoBehaviour{
         Debug.Log("CREO BASE DI CONOSCENZA");
         offsetX = plane.localScale.x * 10f / 2f;
         offsetZ = plane.localScale.z * 10f / 2f;
-        transform.position = GridToReal(new Cell(32, 25));
+        transform.position = GridToReal(new Cell(34, 34));
         GenerateGridFromPlane();
         aStar = new AStar();
         dStarExploration = new DStarLite();
         nextPosition = transform.position;
+
+        // particleFilter.InitializeLandmarks();
+        // particleFilter.InitializeParticles(transform.position);
 
         System.Random random = new System.Random();
         int batteryPercentage = random.Next(30, 80);
@@ -548,15 +554,8 @@ public class RobotMovement : MonoBehaviour{
 
     private void CalculateNavigationPath(){
         currentIndex = 1;
-        // Vector2Int robotPosition = GetRobotPosition();
-        // Vector2Int start = FindCell(FindZone(new Cell(robotPosition)));
-        // Vector2Int end = FindTarget(FindZone(new Cell(robotPosition)));
-
-        // grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, end.x, end.y);
-        // gridCorrection(robotPosition, start, end);
-
         Vector2Int target = FindFreeCell(zone);
-        path = aStar.TrovaPercorso(GetRobotPosition(), target, grid);
+        path = aStar.TrovaPercorso(GetRobotPositionEstimated(), target, grid);
     }
 
     private void CalculateExplorationPath(){
@@ -577,44 +576,30 @@ public class RobotMovement : MonoBehaviour{
         currentIndex = 1;
         explorationPath = null;
         currentExplorationState = ExplorationState.Calculating;
-        Vector2Int robotPosition = GetRobotPosition();
+        Vector2Int robotPosition = GetRobotPositionEstimated();
 
         grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, target.x, target.y);
         gridCorrection(robotPosition, start, target);
         pathTronc.Reverse();
-        explorationPath = dStarExploration.UpdatePath(pathTronc, new Cell(RealToGrid(transform.position)), new Cell(target), grid, zone);
+        explorationPath = dStarExploration.UpdatePath(pathTronc, new Cell(GetRobotPositionEstimated()), new Cell(target), grid, zone);
     }
 
     private void CalculateRecoveryPath(){
         currentIndex = 1;
-        // Vector2Int robotPosition = GetRobotPosition();
-        // Vector2Int start = FindCell(FindZone(new Cell(robotPosition)));
-        // Vector2Int end = FindTarget(FindZone(new Cell(robotPosition)));
-
-        // grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, end.x, end.y);
-        // gridCorrection(robotPosition, start, end);
-
         Cell lastValidCell = explorationPathCopy[currentIndexCopy];
-        recoveryPath = aStar.TrovaPercorso(GetRobotPosition(), new Vector2Int(lastValidCell.x, lastValidCell.y), grid);
+        recoveryPath = aStar.TrovaPercorso(GetRobotPositionEstimated(), new Vector2Int(lastValidCell.x, lastValidCell.y), grid);
     }
 
     private void CalculateChargingnPath(){
         currentIndex = 1;
-        // Vector2Int robotPosition = GetRobotPosition();
-        // Vector2Int start = FindCell(FindZone(new Cell(robotPosition)));
-        // Vector2Int end = FindTarget(FindZone(new Cell(robotPosition)));
-
-        // grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, start.x, start.y, end.x, end.y);
-        // gridCorrection(robotPosition, start, end);
-
         currentChargingState = ChargingState.Calculating;
-        chargingPath = aStar.TrovaPercorso(GetRobotPosition(), (Vector2Int)chargingBasePosition, grid);
+        chargingPath = aStar.TrovaPercorso(GetRobotPositionEstimated(), (Vector2Int)chargingBasePosition, grid);
     }
 
     private void DistanceCalculation(List<Cell> selectedPath){
         Move activeSensor = OrientationToDirection(selectedPath);
 
-        Vector2Int robotPosition = GetRobotPosition();
+        Vector2Int robotPosition = GetRobotPositionEstimated();
         int robotOrientation = RobotOrientation();
 
         Debug.Log($"Active Sensor: {activeSensor}");
@@ -656,7 +641,6 @@ public class RobotMovement : MonoBehaviour{
                 _ => null
             };
         }else{ //celle non adiacenti, il robot non sa dove andare quindi calcola un nuovo percorso che parte dal punto in cui si trova
-            transform.position = GridToReal(new Cell(GetRobotPosition()));
             if(operatingMode == OperatingMode.Navigation){
                 currentNavigationState = NavigationState.FindZone;
             }else if (operatingMode == OperatingMode.Exploration){
@@ -720,9 +704,7 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private void NavigationMove(){
-        if(FrameCounter >= 100/speed){
-            transform.position = GridToReal(new Cell(GetRobotPosition()));
-            Debug.Log("OPS MI SONO PERSO");
+        if(FrameCounter >= 200 * cellSize/speed){
             currentNavigationState = NavigationState.StartCalculation;
             return;
         }
@@ -732,24 +714,33 @@ public class RobotMovement : MonoBehaviour{
         float z_rotation = transform.eulerAngles.z;
         
         if (nextMove == Move.Left){
+            movement = Vector3.zero;
+            angle = 270;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentNavigationState = NavigationState.DistanceCalculation;
         }else if (nextMove == Move.Right){
+            movement = Vector3.zero;
+            angle = 90;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentNavigationState = NavigationState.DistanceCalculation;
         }else if (nextMove == Move.Forward){
+            movement = transform.forward * speed * Time.deltaTime;
+            angle = 0;
+            //UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
-            transform.position += transform.forward * speed * Time.deltaTime;
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+            transform.position += movement;
+            if(RealToGrid(transform.position).x == nextCell.x && RealToGrid(transform.position).y == nextCell.y){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPositionEstimated().x, GetRobotPositionEstimated().y);
                 FrameCounter = 0; //se termino un movimento significa che non mi sono perso quindi pongo la variabile a 0 per il prossimo controllo
-                transform.position = nextPosition;
+
                 if (currentIndex < path.Count - 1){//da controllare
                     currentNavigationState = NavigationState.DistanceCalculation;
                     currentIndex++; //passo alla cella successiva
@@ -762,16 +753,18 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == Move.Backward){
+            movement = Vector3.zero;
+            angle = 180;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentNavigationState = NavigationState.DistanceCalculation;
         }
     }
 
     private void ExplorationMove(){
-        if(FrameCounter >= 100/speed){
-            transform.position = GridToReal(new Cell(GetRobotPosition()));
+        if(FrameCounter >= 200 * cellSize/speed){
             Debug.Log("OPS MI SONO PERSO");
             currentExplorationState = ExplorationState.StartCalculation;
             return;
@@ -782,30 +775,43 @@ public class RobotMovement : MonoBehaviour{
         float z_rotation = transform.eulerAngles.z;
 
         if (nextMove == Move.Left){
+            movement = Vector3.zero;
+            angle = 270;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }else if (nextMove == Move.Right){
+            movement = Vector3.zero;
+            angle = 90;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }else if (nextMove == Move.Forward){
+            movement = transform.forward * speed * Time.deltaTime;
+            angle = 0;
+            //UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
-            transform.position += transform.forward * speed * Time.deltaTime;
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+            transform.position += movement;
+            if(RealToGrid(transform.position).x == nextCell.x && RealToGrid(transform.position).y == nextCell.y){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPositionEstimated().x, GetRobotPositionEstimated().y);
                 FrameCounter = 0; //se termino un movimento significa che non mi sono perso quindi pongo la variabile a 0 per il prossimo controllo
-                transform.position = nextPosition;
-                Vector2Int robotCell = GetRobotPosition();
+                Debug.Log("Arrivato");
+                Vector2Int robotCell = GetRobotPositionEstimated();
+                if(grid[robotCell.x, robotCell.y] == 2) count++;
+                Debug.Log($"Sono passato {count} volte da celle già visitate");
                 grid[robotCell.x, robotCell.y] = 2;
                 if (currentIndex < explorationPath.Count - 1 && !IsAllVisited(explorationPath)){
                     currentExplorationState = ExplorationState.DistanceCalculation;
                     currentIndex++; //passo alla cella successiva
                 }else{
+                    isFirstSpeack = true;
+                    count = 0;
                     Debug.Log("CAMBIO MODALITA' DA EXPLORATION MODE A NAVIGATION MODE");
                     currentNavigationState = NavigationState.UpdatePersonState;
                     operatingMode = OperatingMode.Navigation;
@@ -814,16 +820,18 @@ public class RobotMovement : MonoBehaviour{
                 
             }
         }else if (nextMove == Move.Backward){
+            movement = Vector3.zero;
+            angle = 180;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentExplorationState = ExplorationState.DistanceCalculation;
         }
     }
 
     private void RecoveryMove(){
-        if(FrameCounter >= 100/speed){
-            transform.position = GridToReal(new Cell(GetRobotPosition()));
+        if(FrameCounter >= 200 * cellSize/speed){
             Debug.Log("OPS MI SONO PERSO");
             currentRecoveryState = RecoveryState.StartCalculation;
             return;
@@ -834,24 +842,32 @@ public class RobotMovement : MonoBehaviour{
         float z_rotation = transform.eulerAngles.z;
 
         if (nextMove == Move.Left){
+            movement = Vector3.zero;
+            angle = 270;
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentRecoveryState = RecoveryState.DistanceCalculation;
         }else if (nextMove == Move.Right){
+            movement = Vector3.zero;
+            angle = 90;
+            // UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentRecoveryState = RecoveryState.DistanceCalculation;
         }else if (nextMove == Move.Forward){
+            movement = transform.forward * speed * Time.deltaTime;
+            angle = 0;
+            // UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
-            transform.position += transform.forward * speed * Time.deltaTime;
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+            transform.position += movement;
+            if(RealToGrid(transform.position).x == nextCell.x && RealToGrid(transform.position).y == nextCell.y){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPositionEstimated().x, GetRobotPositionEstimated().y);
                 FrameCounter = 0; //se termino un movimento significa che non mi sono perso quindi pongo la variabile a 0 per il prossimo controllo
-                transform.position = nextPosition;
                 if (currentIndex < recoveryPath.Count - 1){
                     currentRecoveryState = RecoveryState.DistanceCalculation;
                     currentIndex++; //passo alla cella successiva
@@ -863,16 +879,18 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == Move.Backward){
+            movement = Vector3.zero;
+            angle = 180;
+            // UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, Mathf.Repeat(y_rotation - 180, 360f), z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentRecoveryState = RecoveryState.DistanceCalculation;
         }
     }
 
     private void ChargingMove(){
-        if(FrameCounter >= 100/speed){
-            transform.position = GridToReal(new Cell(GetRobotPosition()));
+        if(FrameCounter >= 200 * cellSize/speed){
             Debug.Log("OPS MI SONO PERSO");
             currentChargingState = ChargingState.StartCalculation;
             return;
@@ -883,24 +901,32 @@ public class RobotMovement : MonoBehaviour{
         float z_rotation = transform.eulerAngles.z;
 
         if (nextMove == Move.Left){
+            movement = Vector3.zero;
+            angle = 270;
+            // UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentChargingState = ChargingState.DistanceCalculation;
         }else if (nextMove == Move.Right){
+            movement = Vector3.zero;
+            angle = 90;
+            // UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + 90, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentChargingState = ChargingState.DistanceCalculation;
         }else if (nextMove == Move.Forward){
+            movement = transform.forward * speed * Time.deltaTime;
+            angle = 0;
+            // UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
-            transform.position += transform.forward * speed * Time.deltaTime;
-            if (Vector3.Distance(transform.position, nextPosition) < 0.2f){
-                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPosition().x, GetRobotPosition().y);
+            transform.position += movement;
+            if(RealToGrid(transform.position).x == nextCell.x && RealToGrid(transform.position).y == nextCell.y){
+                _ = databaseManager.UpdateRobotPositionAsync(GetRobotPositionEstimated().x, GetRobotPositionEstimated().y);
                 FrameCounter = 0; //se termino un movimento significa che non mi sono perso quindi pongo la variabile a 0 per il prossimo controllo
-                transform.position = nextPosition;
                 if (currentIndex < chargingPath.Count - 1){
                     currentChargingState = ChargingState.DistanceCalculation;
                     currentIndex++; //passo alla cella successiva
@@ -910,15 +936,21 @@ public class RobotMovement : MonoBehaviour{
                 }
             }
         }else if (nextMove == Move.Backward){
+            movement = Vector3.zero;
+            angle = 180;
+            // UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
-            transform.rotation = Quaternion.Euler(x_rotation, y_rotation - 180, z_rotation);
+            transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
             currentChargingState = ChargingState.DistanceCalculation;
         }
     }
 
     private Vector2Int GetRobotPosition(){
-        return RealToGrid(transform.position);;
+        return RealToGrid(transform.position);
+    }
+    private Vector2Int GetRobotPositionEstimated(){
+        return RealToGrid(transform.position);
     }
 
     private Direction RelativeTargetPosition(Vector2Int robotCell, Vector2Int targetCell){
@@ -934,7 +966,7 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private Move OrientationToDirection(List<Cell> selectedPath){
-        Vector2Int robotCell = GetRobotPosition();
+        Vector2Int robotCell = GetRobotPositionEstimated();
         Debug.Log($"current index {currentIndex}, path.count {selectedPath.Count}");
         Vector2Int targetCell = new Vector2Int(selectedPath[currentIndex].x, selectedPath[currentIndex].y);
 
@@ -1026,8 +1058,8 @@ public class RobotMovement : MonoBehaviour{
         float width = 10 * planeScale.x;
         float height = 10 * planeScale.z;
 
-        int gridWidth = Mathf.CeilToInt(width / cellSize);
-        int gridHeight = Mathf.CeilToInt(height / cellSize);
+        int gridWidth = (int)width;
+        int gridHeight = (int)height;
 
         grid = new int[gridWidth, gridHeight];
 
@@ -1039,23 +1071,35 @@ public class RobotMovement : MonoBehaviour{
     }
 
     private Vector2Int RealToGrid(Vector3 position){
-        int x = Mathf.FloorToInt(position.x + offsetX);
-        int y = Mathf.FloorToInt(position.z + offsetZ);
+        float marginX = 0;
+        float marginY = 0;
+        if(RobotOrientation() == 0){
+            marginY = -0.5f;
+        }else if(RobotOrientation() == 90){
+            marginX = -0.5f;
+        }else if(RobotOrientation() == 180){
+            marginY = 0.5f;
+        }else if(RobotOrientation() == 270){
+            marginX = 0.5f;
+        }
+        
+        int x = (int)Mathf.Round(position.x + marginX + offsetX);
+        int y = (int)Mathf.Round(position.z + marginY + offsetZ);
         x = x > 0 ? x : 0;
         y = y > 0 ? y : 0;
         return new Vector2Int(x, y);
     }
 
     private Vector3 GridToReal(Cell nextCell){
-        return new Vector3((nextCell.x * cellSize) - offsetX, transform.position.y, (nextCell.y * cellSize) - offsetZ);
+        return new Vector3(nextCell.x - offsetX, transform.position.y, nextCell.y - offsetZ);
     }
 
     private string FindZone(Cell cell){
         int x = cell.x;
         int y = cell.y;
 
-        int zoneX = x / 14;
-        int zoneY = y / 14;
+        int zoneX = x / (int)(14/cellSize);
+        int zoneY = y / (int)(14/cellSize);
 
         int zoneNumber = zoneY * 5 + zoneX + 1;
         return "Z" + zoneNumber;
@@ -1068,7 +1112,7 @@ public class RobotMovement : MonoBehaviour{
         int zoneX = zoneIndex % 5;
         int zoneY = zoneIndex / 5;
 
-        return new Vector2Int(zoneX * 14, zoneY * 14);
+        return new Vector2Int(zoneX * (int)(14/cellSize), zoneY * (int)(14/cellSize));
     }
 
     private Vector2Int FindFreeCell(string zone){
@@ -1105,10 +1149,10 @@ public class RobotMovement : MonoBehaviour{
                 int zoneNumber = row * 5 + col + 1;
                 string zoneName = "Z" + zoneNumber;
 
-                int x1 = col * 14;
-                int y1 = row * 14;
-                int x2 = x1 + 14;
-                int y2 = y1 + 14;
+                int x1 = col * (int)(14/cellSize);
+                int y1 = row * (int)(14/cellSize);
+                int x2 = x1 + (int)(14/cellSize);
+                int y2 = y1 + (int)(14/cellSize);
 
                 await databaseManager.CreateZoneNodeAsync(zoneName, x1, y1, x2, y2, false);
             }
@@ -1118,7 +1162,9 @@ public class RobotMovement : MonoBehaviour{
 
     private void gridCorrection(Vector2Int cell, Vector2Int startZone, Vector2Int target){
         if (IsRobotTrulyBlocked(cell.x, cell.y, startZone.x, startZone.y, target.x, target.y)){
+            Debug.Log($"SONO bloccato e sto andando a resettare la zona {cell.x} {cell.y} {FindZone(new Cell(cell.x, cell.y))}");
             ResetZone(cell);
+
         }
     }
 
@@ -1137,42 +1183,26 @@ public class RobotMovement : MonoBehaviour{
 
             foreach (Vector2Int neighbor in AddNeighbor(current.x, current.y, min_x, min_y, max_x, max_y, visited)){
                 if (grid[neighbor.x, neighbor.y] == 0){
+                    Debug.Log($"La posizione libera è {neighbor.x} {neighbor.y}");
                     return false;
+                }else if(grid[neighbor.x, neighbor.y] == 2){
+                    coda.Enqueue(neighbor);
                 }
-
-                coda.Enqueue(neighbor);
             }
         }
-        return CheckExternalZone(min_x, min_y, max_x, max_y, visited);
-    }
+        // Vector2Int[] directions = {new Vector2Int(-1, 0), new Vector2Int(1, 0), new Vector2Int(0, -1), new Vector2Int(0, 1)};
 
-    private bool CheckExternalZone(int min_x, int min_y, int max_x, int max_y, bool[,] visited){
-        int rows = grid.GetLength(0);
-        int cols = grid.GetLength(1);
+        // foreach (var dir in directions){
+        //     int nx = x_start + dir.x;
+        //     int ny = y_start + dir.y;
 
-        for (int x = min_x - 1; x <= max_x + 1; x++) {
-            if (x < 0 || x >= rows) continue;
+        //     if (nx >= 0 && nx <= 69 && ny >= 0 && ny <= 69 && grid[nx, ny] == 0){
+        //         Debug.Log($"La posizione libera è {nx} {ny}");
+        //         return false;
+        //     }
 
-            if (min_y - 1 >= 0 && grid[x, min_y - 1] == 0 && !visited[x, min_y - 1]){
-                return false;
-            }
-            
-            if (max_y + 1 < cols && grid[x, max_y + 1] == 0 && !visited[x, max_y + 1]){
-                return false;
-            }
-        }
-
-        for (int y = min_y - 1; y <= max_y + 1; y++){
-            if (y < 0 || y >= cols) continue;
-
-            if (min_x - 1 >= 0 && grid[min_x - 1, y] == 0 && !visited[min_x - 1, y]){
-                return false;
-            }
-
-            if (max_x + 1 < rows && grid[max_x + 1, y] == 0 && !visited[max_x + 1, y]){
-                return false;
-            }
-        }
+        // }
+        Debug.Log("SONO BLOCCATO");
         return true;
     }
 
@@ -1183,7 +1213,7 @@ public class RobotMovement : MonoBehaviour{
             int nx = x + dir.x;
             int ny = y + dir.y;
 
-            if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y && !visited[nx, ny]){
+            if (nx >= 0 && nx <= 69 && ny >= 0 && ny <= 69 && !visited[nx, ny]){
                 visited[nx, ny] = true;
                 yield return new Vector2Int(nx, ny);
             }
@@ -1193,12 +1223,14 @@ public class RobotMovement : MonoBehaviour{
     private void ResetZone(Vector2Int cell){
         string zone = FindZone(new Cell(cell));
         Vector2Int targetZone = FindTarget(zone);
-        int min_x = targetZone.x - 13;
-        int min_y = targetZone.y - 13;
+        Vector2Int startZone = FindCell(zone);
+        int min_x = startZone.x;
+        int min_y = startZone.y;
         int max_x = targetZone.x;
         int max_y = targetZone.y;
 
         if (min_x < 0 || min_y < 0 || max_x >= grid.GetLength(0) || max_y >= grid.GetLength(1)){
+            Debug.Log("SONO FUORI DALLA GRIGLIA E NON POSSO RESETARE");
             return;
         }
 
@@ -1242,7 +1274,7 @@ public class RobotMovement : MonoBehaviour{
         }
 
         Gizmos.color = Color.yellow;
-        int zoneSize = 14;
+        int zoneSize = (int)(14/cellSize);
         float lineThickness = 0.1f;
 
         for (int x = 0; x < grid.GetLength(0); x += zoneSize){
@@ -1268,4 +1300,25 @@ public class RobotMovement : MonoBehaviour{
         return copy;
     }
 
+    void UpdateEstimatedPosition(Vector3 movement, float deltaTheta){
+        particleFilter.Predict(movement.x, movement.z, deltaTheta); 
+
+        float[] observedDistances = GetObservedDistances();
+        particleFilter.UpdateWeights(observedDistances);
+        particleFilter.Resample();
+        
+        estimatedPosition = particleFilter.EstimatePosition();
+
+        // Debug.Log($"Posizione stimata dal filtro: {estimatedPosition}, posizione reale: {transform.position}");
+    }
+
+    float[] GetObservedDistances(){
+        float[] distances = new float[particleFilter.landmarks.Count];
+        for (int i = 0; i < particleFilter.landmarks.Count; i++){
+            Vector2 landmarkPosition = particleFilter.landmarks[i];
+            float distance = Vector2.Distance(new Vector2(transform.position.x, transform.position.z), landmarkPosition);
+            distances[i] = distance;
+        }
+        return distances;
+    }
 }

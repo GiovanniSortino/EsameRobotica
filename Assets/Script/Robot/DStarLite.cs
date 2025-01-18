@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using System.Text;
 
 
 public class DStarLite
@@ -61,7 +62,7 @@ public class DStarLite
     {
         int inv;
         // Se la cella non   stata visitata (presumibilmente indicata da -1), inv = 1, altrimenti inv = -1
-        if (grid[a.x, a.y] == 0)//&& !pathTronc.Contains(a) //Se è già stata visitata dal robot
+        if (grid[a.x, a.y] == 0 && !pathTronc.Contains(a)) //Se è già stata visitata dal robot
         {
             inv = 1; //nel caso di celle già visitate devo allontanarmi dal target
             // Debug.Log($"Euristica {a.x}, {a.y} : {inv}");
@@ -82,6 +83,7 @@ public class DStarLite
         /*int rows = grid.GetLength(0);
         int cols = grid.GetLength(1);
         Debug.Log(rows);*/
+        //StampaMatrice(grid);
         first = true;
 
         grid_visited = CreaNuovaGriglia(grid);
@@ -91,7 +93,7 @@ public class DStarLite
         }
 
         Cell cella = pathTronc[pathTronc.Count - 1];
-        //pathTronc.RemoveAt(pathTronc.Count - 1);
+        pathTronc.RemoveAt(pathTronc.Count - 1);
 
         (int min_x, int min_y, int max_x, int max_y) = GetZoneBounds(zone, 14);
 
@@ -146,6 +148,9 @@ public class DStarLite
                 //path.Add(robotPos);
                 //Debug.Log("Nodo iniziale");
                 //Debug.Log(cella.ToString());
+
+                //StampaMatrice(grid_visited);
+
                 path.Reverse();
                 pathTronc.Reverse();
                 path.AddRange(pathTronc);
@@ -199,7 +204,24 @@ public class DStarLite
         return (min_x, min_y, max_x, max_y);
     }
 
-    public bool Stop(int[,] grid, string zona)
+    public void StampaMatrice(int[,] matrix)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("MATRICE:");
+
+        for (int j = 13; j >= 0; j--) // Invertiamo le colonne per eliminare la specchiatura
+        {
+            for (int i = 0; i < 14; i++) // Righe normali
+            {
+                sb.Append(matrix[i, j] + " ");
+            }
+            sb.AppendLine();
+        }
+
+        Debug.Log(sb.ToString()); // Mostra la matrice nella Console di Unity
+    }
+
+    public bool Stop(int[,] grid, string zona) 
     {
         // Dimensione di ogni zona
         int zoneSize = 14;

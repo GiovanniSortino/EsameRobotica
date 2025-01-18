@@ -3,8 +3,6 @@ using UnityEngine;
 using Neo4j.Driver;
 using System.Threading.Tasks;
 using System;
-using Unity.VisualScripting;
-using Unity.VisualScripting.AssemblyQualifiedNameParser;
 
 public class DatabaseManager{
     private static IDriver _driver;
@@ -305,22 +303,21 @@ public class DatabaseManager{
 
         string query = @$"
                 MATCH (p:Disperso {{stato_rilevamento: 'Disperso'}})
-                WITH p.zona AS zona, 
-                    COUNT(CASE WHEN p.eta <= 12 THEN 1 ELSE 0 END) AS under12Count,
+                WITH 
+                    p.zona AS zona, 
+                    SUM(CASE WHEN toInteger(p.eta) <= 12 THEN 1 ELSE 0 END) AS under12Count,  // Correzione qui
                     MIN(toInteger(p.eta)) AS minEta
                 WITH 
                     zona,
                     under12Count,
                     minEta,
                     CASE
-                        WHEN {batteryLevel} < 20 THEN '{baseCell}'
-                        WHEN {batteryLevel} < 50 AND zona = '{baseZone}' THEN zona
+                        WHEN {batteryLevel} < 30 THEN '{baseCell}'
                         ELSE zona
                     END AS result,
                     CASE
-                        WHEN {batteryLevel} < 20 THEN 0
-                        WHEN {batteryLevel} < 50 AND zona = '{baseZone}' THEN 1
-                        ELSE 2
+                        WHEN {batteryLevel} < 30 THEN 0
+                        ELSE 1
                     END AS priority
                 ORDER BY 
                     priority ASC,

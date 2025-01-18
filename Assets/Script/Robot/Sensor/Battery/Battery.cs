@@ -35,7 +35,7 @@ public class Battery : MonoBehaviour{
 
                     _ = databaseManager.SetBatteryLevelAsync((int)percentage);
                 }
-            }else if(!isCharging && timer >= 10f){
+            }else if(!isCharging && timer >= 20f){
                 isFirstCharging = false;
                 if (percentage <= 0){
                     timer = 0f;

@@ -101,11 +101,11 @@ public class ThermalCamera : MonoBehaviour
                 {
                     person = DistanceSensor.hitCenter;
                 }
-                else if (DistanceSensor.hitCenter.collider != null && DistanceSensor.hitLeft.collider.CompareTag("Person"))
+                else if (DistanceSensor.hitLeft.collider != null && DistanceSensor.hitLeft.collider.CompareTag("Person"))
                 {
                     person = DistanceSensor.hitLeft;
                 }
-                else
+                else if (DistanceSensor.hitRight.collider != null && DistanceSensor.hitRight.collider.CompareTag("Person"))
                 {
                     person = DistanceSensor.hitRight;
                 }
