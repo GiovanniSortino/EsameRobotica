@@ -590,10 +590,6 @@ public class RobotMovement : MonoBehaviour{
     private void CalculateRecoveryPath(){
         currentIndex = 1;
         Cell lastValidCell = explorationPathCopy[currentIndexCopy];
-        Vector2Int robotPosition = GetRobotPositionEstimated();
-        string currentZone = FindZone(new Cell(robotPosition));
-        grid = dStarExploration.Check(grid, robotPosition.x, robotPosition.y, FindCell(currentZone).x, FindCell(currentZone).y, FindTarget(currentZone).x, FindTarget(currentZone).y);
-        gridCorrection(robotPosition, FindCell(currentZone), FindTarget(currentZone));
         recoveryPath = aStar.TrovaPercorso(GetRobotPositionEstimated(), new Vector2Int(lastValidCell.x, lastValidCell.y), grid);
     }
 
