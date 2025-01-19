@@ -563,7 +563,7 @@ public class RobotMovement : MonoBehaviour{
         Vector2Int start = FindCell(zone);
         Vector2Int target = FindTarget(zone);
 
-        if (explorationPath != null){
+        if (explorationPath != null && explorationPath.Count >= 3){ //DA CONTROLLARE
             Debug.Log($"Lunghezza ExplorationPath {explorationPath.Count}");
             Debug.Log($"Lunghezza currentIndex {currentIndex}");
             pathTronc = explorationPath.GetRange(currentIndex + 1, explorationPath.Count - currentIndex - 2);
@@ -693,7 +693,7 @@ public class RobotMovement : MonoBehaviour{
     private void NextMovement(List<Cell> selectedPath){
         nextCell = selectedPath[currentIndex];
         nextPosition = GridToReal(nextCell);
-        Debug.Log($"NodoGriglia corrente: {currentIndex}/{selectedPath.Count}, Posizione corrente {transform.position} -> {GetRobotPosition()}, Target Posizione: {nextPosition} -> {RealToGrid(nextPosition)}");
+        Debug.Log($"NodoGriglia corrente: {currentIndex}/{selectedPath.Count}, Posizione corrente {transform.position} -> {GetRobotPositionEstimated()}, Target Posizione: {nextPosition} -> {RealToGrid(nextPosition)}");
         autoIncrementCell++;
 
         _ = databaseManager.CreateCellNodeAsync($"C{autoIncrementCell}", nextCell.x, nextCell.y, FindZone(nextCell));
@@ -852,7 +852,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Right){
             movement = Vector3.zero;
             angle = 90;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
@@ -860,7 +860,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Forward){
             movement = transform.forward * speed * Time.deltaTime;
             angle = 0;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
@@ -881,7 +881,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Backward){
             movement = Vector3.zero;
             angle = 180;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
@@ -903,7 +903,7 @@ public class RobotMovement : MonoBehaviour{
         if (nextMove == Move.Left){
             movement = Vector3.zero;
             angle = 270;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
@@ -911,7 +911,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Right){
             movement = Vector3.zero;
             angle = 90;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
@@ -919,7 +919,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Forward){
             movement = transform.forward * speed * Time.deltaTime;
             angle = 0;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             FrameCounter++; //serve per controllare se il robot per più di tot frame non completa un movimento, ovvero se si è perso
             rotation = 0; //se mi sposto in avanti non sto facendo rotazioni quindi resetto il numero di rotazioni consecutive effettuate
             insertObstacle = true; //inserisco gli ostacoli solo quando il movimento fatto non è una rotazione, se facessi diversamente il robot durante la rotazione calcolerebbe distanze errate
@@ -938,7 +938,7 @@ public class RobotMovement : MonoBehaviour{
         }else if (nextMove == Move.Backward){
             movement = Vector3.zero;
             angle = 180;
-            // UpdateEstimatedPosition(movement, angle);
+            //UpdateEstimatedPosition(movement, angle);
             rotation++; //serve per gestire il guasto delle rotazioni
             insertObstacle = false; //disattivo l'inserimento degli ostacoli, il calcolo delle distanze in questo caso non è corretto
             transform.rotation = Quaternion.Euler(x_rotation, y_rotation + angle, z_rotation);
@@ -949,6 +949,7 @@ public class RobotMovement : MonoBehaviour{
     private Vector2Int GetRobotPosition(){
         return RealToGrid(transform.position);
     }
+
     private Vector2Int GetRobotPositionEstimated(){
         return RealToGrid(transform.position);
     }
