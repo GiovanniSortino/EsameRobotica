@@ -14,9 +14,9 @@ public class AStar{
         List<Cell> path = new List<Cell>();
         while (cell != null){
             path.Add(cell);
-            cell = cell.parent; // Torna al parent
+            cell = cell.parent;
         }
-        path.Reverse(); // Inverte l'ordine per ottenere il percorso giusto
+        path.Reverse();
         return path;
     }
 

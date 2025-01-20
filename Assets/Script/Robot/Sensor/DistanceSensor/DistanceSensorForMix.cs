@@ -1,7 +1,6 @@
-using System;
 using UnityEngine;
 
-public class DistanceSensorDario : MonoBehaviour{
+public class DistanceSensorForMix : MonoBehaviour{
     [Header("Configurazione Sensore")]
     public float maxDistance = 5;
     private int layerMask;

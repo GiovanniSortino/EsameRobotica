@@ -29,7 +29,7 @@ public class GripperController : MonoBehaviour
     private bool relase = false;
     private bool flagTrigger = true;
 
-    public static bool isGripperActive = false; // Flag per indicare l'esecuzione
+    public static bool isGripperActive = false;
 
 
     enum GripperState
@@ -45,10 +45,10 @@ public class GripperController : MonoBehaviour
 
     GripperState currentState = GripperState.Idle;
 
-    private Quaternion targetRotation; // Rotazione target
+    private Quaternion targetRotation;
     private float rotationProgress = 0f;
     public float moveSpeed = 5f;
-    private Vector3 moveTarget;           // Destinazione per il movimento
+    private Vector3 moveTarget;       
 
     void Update()
     {
@@ -92,7 +92,6 @@ public class GripperController : MonoBehaviour
 
             case GripperState.RotatingBackward:
                 rotationActive = true;
-                //flagTrigger = true;
                 break;
         }
 
@@ -104,20 +103,15 @@ public class GripperController : MonoBehaviour
                 {
                     currentState = GripperState.RotatingForward;
                 }
-                //Debug.Log("1");
                 break;
 
             case GripperState.RotatingForward:
                 Ruota(180f);
-                // Debug.Log("2");
-                //Debug.Log(oggettoPreso);
                 if (!rotationActive) currentState = GripperState.MovingForward;
                 IniziaMovimento(1f);
                 break;
 
             case GripperState.MovingForward:
-                // Debug.Log("3");
-                //Debug.Log(oggettoPreso);
 
                 MuoviAvanti(true);
                 if (!isMovingForward) currentState = GripperState.Releasing;
@@ -125,8 +119,6 @@ public class GripperController : MonoBehaviour
 
             case GripperState.Releasing:
                 RilasciaOggetto();
-                //Debug.Log("4");
-                //Debug.Log(oggettoPreso);
 
                 if (!relase) currentState = GripperState.MovingBackward;
                 IniziaMovimento(-1f);
@@ -134,15 +126,11 @@ public class GripperController : MonoBehaviour
 
             case GripperState.MovingBackward:
                 MuoviAvanti(false);
-                // Debug.Log("5");
-                //Debug.Log(oggettoPreso);
 
                 if (!isMovingBack) currentState = GripperState.RotatingBackward;
                 break;
 
             case GripperState.RotatingBackward:
-                // Debug.Log("6");
-                //Debug.Log(oggettoPreso);
 
                 Ruota(180f);
                 if (!rotationActive) currentState = GripperState.Idle;
@@ -150,18 +138,11 @@ public class GripperController : MonoBehaviour
         }
     }
 
-
-    /*void FixedUpdate()
-    { 
-    }*/
-
-
     void ControllaMovimentoPinza()
     {
         if (oggettoPreso == null)
             return;
 
-        // Fissa l'oggetto alla pinza
         oggettoPreso.SetParent(transform);
         flagTrigger = false;
         isGrabbing = false;
@@ -180,18 +161,11 @@ public class GripperController : MonoBehaviour
         }
     }
 
-    //IN CASO DI ERRORE IN USCITA RIVEDERE QUESTO
-    /*private void OnTriggerExit(Collider other)
-    {
-        if (!isGrabbing && oggettoPreso != null && other.transform == oggettoPreso)
-        {
-            object_detected = false;
-        }
-    }*/
+ 
 
     void Ruota(float angle)
     {
-        if (rotationProgress == 0) // Calcola il target solo all'inizio
+        if (rotationProgress == 0)
         {
             targetRotation = Quaternion.Euler(0, angle, 0) * robot.rotation;
         }
@@ -231,7 +205,6 @@ public class GripperController : MonoBehaviour
             }
         }
     }
-
 
     void RilasciaOggetto()
     {

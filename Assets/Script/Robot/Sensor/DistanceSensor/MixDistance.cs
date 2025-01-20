@@ -3,7 +3,7 @@ using System.Linq;
 
 public class MixDistance : MonoBehaviour
 {
-    public DistanceSensorDario[] distanceSensors;
+    public DistanceSensorForMix[] distanceSensors;
     public float distanceCalculated;
 
     public float distance()

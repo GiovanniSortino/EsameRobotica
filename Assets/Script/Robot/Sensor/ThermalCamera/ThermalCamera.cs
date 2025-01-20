@@ -2,24 +2,22 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 public class ThermalCamera : MonoBehaviour
 {
-    public Camera cam;                   // La fotocamera da cui acquisire i frame
-    public RawImage display;             // (Opzionale) Visualizza il frame su UI
+    public Camera cam;                  
+    public RawImage display;             
+    public Text redPercentageText;       
+    public Text personDetect;       
 
-    public Text redPercentageText;       // Testo UI per mostrare la percentuale di rosso
-    public Text personDetect;       // Testo UI per mostrare la percentuale di rosso
+    public Color targetColor;            
+    public float colorTolerance = 0.1f;  
+    public float minPercentage = 0.1f;   
 
-    public Color targetColor;            // Colore del materiale da rilevare
-    public float colorTolerance = 0.1f;  // Tolleranza per il confronto dei colori
-    public float minPercentage = 0.1f;   // Percentuale minima (10%) per considerare il materiale presente
+    public int detectedPixelCount = 0;   
+    public float detectedPercentage = 0; 
 
-    public int detectedPixelCount = 0;   // Numero di pixel rilevati
-    public float detectedPercentage = 0; // Percentuale rilevata
-
-    public Texture2D texture;           // Per memorizzare i dati dei pixel
+    public Texture2D texture;           
     private float percentage;
     public string idPerson;
     public RaycastHit person;
@@ -58,7 +56,7 @@ public class ThermalCamera : MonoBehaviour
     }
 
     void Update(){
-        timer += Time.deltaTime; // Incrementa il timer
+        timer += Time.deltaTime;
         countFrame++;
         if(countFrame >= 5){
             countFrame = 0;
@@ -93,7 +91,7 @@ public class ThermalCamera : MonoBehaviour
             redPercentageText.text = $"Percentuale di calore {(detectedPercentage * 100f):F2}%";
             detectedPercentage = detectedPercentage * 100f;
 
-            if (detectedPercentage > 2.0f) // Se supera la soglia
+            if (detectedPercentage > 2.0f) 
             {
                 //person = DistanceSensor.hit; // Ottieni il RaycastHit
 
@@ -112,7 +110,6 @@ public class ThermalCamera : MonoBehaviour
 
                 if (person.collider != null && person.collider.CompareTag("Person")) // Controlla se c'  un collider
                 {
-                    // Verifica se l'oggetto colpito ha il componente "Person"
                     var personComponent = person.collider.GetComponent<PersonComponent>();
                     if (personComponent != null)
                     {
@@ -147,13 +144,12 @@ public class ThermalCamera : MonoBehaviour
             }
             else
             {
-                personDetect.text = ""; // Nessun disperso rilevato
+                personDetect.text = ""; 
             }
         }
     }
 
 
-    // Funzione per trovare il colore dominante
     int CountDominantColor(Texture2D tex, out Color dominantColor)
     {
         Dictionary<Color, int> colorCount = new Dictionary<Color, int>();

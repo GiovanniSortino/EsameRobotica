@@ -7,7 +7,7 @@ using System;
 public class DatabaseManager{
     private static IDriver _driver;
     private static DatabaseManager databaseManager;
-    private static SapiTextToSpeech sapiTextToSpeech;
+    public static SapiTextToSpeech sapiTextToSpeech;
     private DatabaseManager(){}
 
     public static DatabaseManager GetDatabaseManager(){
@@ -180,7 +180,6 @@ public class DatabaseManager{
         var result = await ExecuteQueryAsync(query);
 
         if (result.Count > 0 && result[0].ContainsKey("id_cell")){
-            // Convertire il valore in int in modo sicuro
             String id_cella = System.Convert.ToString(result[0]["id_cell"]);
             //Debug.Log($"Proprietà id_cella trovato: cella_x: {pos_x}, cella_y: {pos_y} in cella_id: {id_cella}");        
             return id_cella;
@@ -198,10 +197,6 @@ public class DatabaseManager{
             //Debug.Log($"Nodo Robot aggiornato: robot_id: R1, cella_x: {pos_x}, cella_y: {pos_y} in cella_id: {id_cell}");       
         }
     }
-
-
-    
-    // -----------------------------------------------------------------------------------------------------------------------
 
     //OK
     public async Task<int> GetBatteryLevelAsync(){
@@ -390,7 +385,6 @@ public class DatabaseManager{
         return false;
     }
 
-    //aggiungere explainability
     public async Task ComunicaConPersonaleAsync(string personaleId, string messaggio){
         string query = @$"
             MATCH (r:Robot {{id: 'R1'}}), (pc:PersonaleCompetente {{id: '{personaleId}'}})
@@ -401,7 +395,7 @@ public class DatabaseManager{
     }
 
     //OK
-    public async Task ResetDatabaseAsync(){
+    public async Task ResetAsync(){
         string query = "MATCH (n) DETACH DELETE n";
         await ExecuteQueryAsync(query,true);
         //Debug.Log("Database svuotato con successo!");
@@ -442,6 +436,18 @@ public class DatabaseManager{
             return id_cella;
         }
         return null;
+    }
+
+    public async Task RemoveObstacleAsync(string zone){
+        string query = @$"MATCH (o:Ostacolo), (c:Cella), (z:Zona)
+                        WHERE (o)-[:BLOCCA]->(c) AND c.zona = {zone}
+                        DETACH DELETE o";
+        var result = await ExecuteQueryAsync(query); 
+    }
+
+    public async Task UpdateZoneNodeAsync(String id){
+        string query = $"MATCH (z:Zona {{id: '{id}'}}) SET z.visitata = 'true' RETURN z";
+        await ExecuteQueryAsync(query);
     }
 
 }

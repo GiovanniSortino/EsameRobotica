@@ -8,15 +8,15 @@ public class ToggleAudio : MonoBehaviour
     {
         if (CarPathFollower.isPlaying)
         {
-            if (!audioSource.enabled) // Se l'AudioSource è disattivato
+            if (!audioSource.enabled) 
             {
-                audioSource.enabled = true; // Attivalo
-                audioSource.Play(); // Riproduci l'audio
+                audioSource.enabled = true; 
+                audioSource.Play();
             }
         }else 
         {
-            audioSource.Stop(); // Ferma l'audio
-            audioSource.enabled = false; // Disattivalo
+            audioSource.Stop();
+            audioSource.enabled = false;
         }
     }
 }
